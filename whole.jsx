@@ -773,11 +773,11 @@ export default function App() {
                                 </div>
                                 <div className="flex items-center">
                                     {file.status === 'done' && (
-                                        <button onClick={(e) => { e.stopPropagation(); downloadSingle(file); }} className="p-1.5 text-blue-400 hover:text-blue-300 rounded-md" title="Download">
+                                        <button aria-label={`Download ${file.name}`} onClick={(e) => { e.stopPropagation(); downloadSingle(file); }} className="p-1.5 text-blue-400 hover:text-blue-300 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400" title="Download">
                                             <Download className="w-4 h-4" />
                                         </button>
                                     )}
-                                    <button onClick={(e) => { e.stopPropagation(); removeFile(file.id); }} className="p-1.5 text-gray-500 hover:text-red-400 rounded-md" title="Remove">
+                                    <button aria-label={`Remove ${file.name}`} onClick={(e) => { e.stopPropagation(); removeFile(file.id); }} className="p-1.5 text-gray-500 hover:text-red-400 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400" title="Remove">
                                         <Trash2 className="w-4 h-4" />
                                     </button>
                                 </div>
@@ -976,30 +976,30 @@ export default function App() {
                                     <div className="flex justify-between items-center mb-3">
                                         <div className="text-xs font-medium text-gray-400 uppercase tracking-wide">Mapping {idx + 1}</div>
                                         <div className="flex items-center gap-2 z-10">
-                                            <button onClick={(e) => {
+                                            <button aria-label={`Move Mapping ${idx + 1} Up`} onClick={(e) => {
                                                 e.stopPropagation();
                                                 if (idx === 0) return;
                                                 const newM = [...multiMappings];
                                                 [newM[idx-1], newM[idx]] = [newM[idx], newM[idx-1]];
                                                 setMultiMappings(newM);
-                                            }} className="text-gray-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed" disabled={idx === 0}>
+                                            }} className="text-gray-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 rounded" disabled={idx === 0}>
                                                 <ChevronUp className="w-4 h-4"/>
                                             </button>
-                                            <button onClick={(e) => {
+                                            <button aria-label={`Move Mapping ${idx + 1} Down`} onClick={(e) => {
                                                 e.stopPropagation();
                                                 if (idx === multiMappings.length - 1) return;
                                                 const newM = [...multiMappings];
                                                 [newM[idx+1], newM[idx]] = [newM[idx], newM[idx+1]];
                                                 setMultiMappings(newM);
-                                            }} className="text-gray-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed" disabled={idx === multiMappings.length - 1}>
+                                            }} className="text-gray-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 rounded" disabled={idx === multiMappings.length - 1}>
                                                 <ChevronDown className="w-4 h-4"/>
                                             </button>
-                                            <button onClick={(e) => {
+                                            <button aria-label={`Delete Mapping ${idx + 1}`} onClick={(e) => {
                                                 e.stopPropagation();
                                                 const newM = multiMappings.filter(m => m.id !== mapping.id);
                                                 setMultiMappings(newM);
                                                 if (activeSourceId === mapping.id && newM.length > 0) setActiveSourceId(newM[0].id);
-                                            }} className="text-gray-500 hover:text-red-400">
+                                            }} className="text-gray-500 hover:text-red-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 rounded">
                                                 <Trash2 className="w-4 h-4"/>
                                             </button>
                                         </div>
@@ -1060,11 +1060,11 @@ export default function App() {
                                 <div key={variant.id} className={`bg-gray-800/40 border p-4 rounded-xl relative transition-all ${selectedVariantId === variant.id ? 'border-green-500 ring-1 ring-green-500/50 shadow-lg' : 'border-gray-700'}`}>
                                     <div className="flex justify-between items-center mb-3">
                                         <div className="text-xs font-medium text-gray-400 uppercase tracking-wide">Variant {vIdx + 1}</div>
-                                        <button onClick={() => {
+                                        <button aria-label={`Delete Variant ${vIdx + 1}`} onClick={() => {
                                             const newV = variants.filter(v => v.id !== variant.id);
                                             setVariants(newV);
                                             if (selectedVariantId === variant.id && newV.length > 0) setSelectedVariantId(newV[0].id);
-                                        }} className="text-gray-500 hover:text-red-400">
+                                        }} className="text-gray-500 hover:text-red-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 rounded">
                                             <Trash2 className="w-4 h-4"/>
                                         </button>
                                     </div>
@@ -1078,10 +1078,10 @@ export default function App() {
                                             <div key={rule.id} onClick={() => { setSelectedVariantId(variant.id); setActiveSourceId(rule.id); }} className={`bg-gray-900 p-3 rounded-lg border ${selectedVariantId === variant.id && activeSourceId === rule.id ? 'border-green-500' : 'border-gray-700'} cursor-pointer`}>
                                                 <div className="flex justify-between items-center mb-2">
                                                     <span className="text-[10px] text-gray-500">Rule {rIdx + 1}</span>
-                                                    <button onClick={(e) => {
+                                                    <button aria-label={`Delete Rule ${rIdx + 1} from Variant ${vIdx + 1}`} onClick={(e) => {
                                                         e.stopPropagation();
                                                         setVariants(variants.map(v => v.id === variant.id ? {...v, rules: v.rules.filter(r => r.id !== rule.id)} : v));
-                                                    }} className="text-gray-600 hover:text-red-400"><Trash2 className="w-3 h-3"/></button>
+                                                    }} className="text-gray-600 hover:text-red-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 rounded"><Trash2 className="w-3 h-3"/></button>
                                                 </div>
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <input type="color" value={safeHex(rule.target)} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, rules: v.rules.map(r => r.id === rule.id ? {...r, target: e.target.value} : r)} : v))} className="w-6 h-6 rounded p-0 border-0 bg-transparent shrink-0 cursor-pointer"/>
