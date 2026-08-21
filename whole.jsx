@@ -275,6 +275,7 @@ export default function App() {
     const originalCanvasRef = useRef(null);
     const recoloredCanvasRef = useRef(null);
     const animationRef = useRef(null);
+    const previewFrameIdxRef = useRef(0);
 
     // --- CANVAS INTERACTION ---
     const handleCanvasClick = (e) => {
@@ -394,6 +395,7 @@ export default function App() {
                         height: img.height
                     }]);
                 }
+                previewFrameIdxRef.current = 0;
                 setPreviewStatus('success');
             } catch (err) {
                 if (isCancelled) return;
@@ -408,20 +410,24 @@ export default function App() {
 
     // Live Animation Loop
     useEffect(() => {
-        if (previewFrames.length === 0 || !isPlaying) {
+        if (previewFrames.length === 0) {
             if (animationRef.current) cancelAnimationFrame(animationRef.current);
             return;
         }
 
-        let currentFrameIdx = 0;
         let lastDrawTime = performance.now();
-        let isFirstDraw = true; // Force instant draw on mount
+        let isFirstDraw = true; // Force instant draw on mount or rule update
 
         const drawFrame = (time) => {
             try {
-                const frame = previewFrames[currentFrameIdx];
+                // Ensure index is within bounds if frames changed
+                if (previewFrameIdxRef.current >= previewFrames.length) {
+                    previewFrameIdxRef.current = 0;
+                }
+                
+                const frame = previewFrames[previewFrameIdxRef.current];
 
-                if (isFirstDraw || (time - lastDrawTime >= frame.delay)) {
+                if (isFirstDraw || (isPlaying && (time - lastDrawTime >= frame.delay))) {
                     const oCtx = originalCanvasRef.current?.getContext('2d');
                     const rCtx = recoloredCanvasRef.current?.getContext('2d');
 
@@ -444,18 +450,26 @@ export default function App() {
                         }
                     }
 
-                    currentFrameIdx = (currentFrameIdx + 1) % previewFrames.length;
-                    lastDrawTime = time;
+                    if (isPlaying) {
+                        previewFrameIdxRef.current = (previewFrameIdxRef.current + 1) % previewFrames.length;
+                        lastDrawTime = time;
+                    }
                     isFirstDraw = false;
                 }
             } catch (err) {
                 console.error("Render loop error:", err);
             }
-            animationRef.current = requestAnimationFrame(drawFrame);
+            
+            if (isPlaying || isFirstDraw) {
+                animationRef.current = requestAnimationFrame(drawFrame);
+            }
         };
 
         animationRef.current = requestAnimationFrame(drawFrame);
-        return () => cancelAnimationFrame(animationRef.current);
+        
+        return () => {
+            if (animationRef.current) cancelAnimationFrame(animationRef.current);
+        };
     }, [previewFrames, getActiveRules, isPlaying]);
 
 
