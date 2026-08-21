@@ -1265,7 +1265,8 @@ export default function App() {
                                 <div className="space-y-3">
                                     <FAQItem question="How does color replacement work?">You select a target color and choose a new color (e.g., Red → Blue). This replaces the selected color across the image.</FAQItem>
                                     <FAQItem question="What is Match Range / Tolerance?">Tolerance controls how closely a color must match the selected target color before it is replaced. A higher tolerance includes more similar colors to help with anti-aliasing and compression artifacts.</FAQItem>
-                                    <FAQItem question="Can I replace multiple colors?">Yes. You can add multiple target colors and configure several color replacement rules. They are applied in the order displayed in the Color Rules panel.</FAQItem>
+                                    <FAQItem question="Can I replace multiple colors?">Yes. You can use Single Color Output to turn multiple target colors into one single color, or switch to Multi-Color Mapping in the Advanced Settings to map each target color to its own unique replacement.</FAQItem>
+                                    <FAQItem question="What are Color Variants?">Color Variants (in Advanced Settings) allow you to set up multiple different color rules (e.g., a Blue Version and a Red Version) and generate all of them at once for every uploaded file.</FAQItem>
                                     <FAQItem question="Why isn't my color being replaced?">Check that the target color is correct, increase the tolerance slightly, confirm the selected file contains the target color, and check the Live Preview.</FAQItem>
                                 </div>
                             </div>
@@ -1315,14 +1316,14 @@ export default function App() {
 
                             <div className="bg-gray-900/40 border border-gray-800 p-6 rounded-xl hover:border-gray-700 transition-colors flex flex-col h-full">
                                 <div className="text-blue-400 text-sm font-bold tracking-wider mb-2">03</div>
-                                <h3 className="text-lg font-medium text-gray-200 mb-2">Configure Colors</h3>
-                                <p className="text-sm text-gray-400">Choose the target color, replacement color, and adjust the tolerance.</p>
+                                <h3 className="text-lg font-medium text-gray-200 mb-2">Configure Rules</h3>
+                                <p className="text-sm text-gray-400">Set up standard single-color replacements, or use Advanced Settings for Multi-Color mapping and multiple Variants.</p>
                             </div>
 
                             <div className="bg-gray-900/40 border border-gray-800 p-6 rounded-xl hover:border-gray-700 transition-colors flex flex-col h-full">
                                 <div className="text-blue-400 text-sm font-bold tracking-wider mb-2">04</div>
                                 <h3 className="text-lg font-medium text-gray-200 mb-2">Preview</h3>
-                                <p className="text-sm text-gray-400">Select a file and verify the color replacements in Live Preview.</p>
+                                <p className="text-sm text-gray-400">Select a file and verify the rules in Live Preview. Switch preview variants if using Variant mode.</p>
                             </div>
 
                             <div className="bg-gray-900/40 border border-gray-800 p-6 rounded-xl hover:border-gray-700 transition-colors flex flex-col h-full">
