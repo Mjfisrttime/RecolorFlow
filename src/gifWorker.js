@@ -94,15 +94,15 @@ const decodeGifInWorker = (arrayBuffer) => {
     return frames;
 };
 
-const applySourcesToImageData = (imageData, sources, globalNewColor) => {
+const applyRulesToImageData = (imageData, rules) => {
     const data = new Uint8ClampedArray(imageData.data);
     const width = imageData.width;
     const height = imageData.height;
 
-    const tgt = hexToRgb(globalNewColor);
-    const parsedSources = sources.map(s => ({
-        src: hexToRgb(s.source),
-        tol: (s.tolerance / 100) * MAX_COLOR_DIST
+    const parsedRules = rules.map(r => ({
+        src: hexToRgb(r.srcHex),
+        tgt: hexToRgb(r.tgtHex),
+        tol: (r.tol / 100) * MAX_COLOR_DIST
     }));
 
     for (let i = 0; i < data.length; i += 4) {
@@ -110,14 +110,14 @@ const applySourcesToImageData = (imageData, sources, globalNewColor) => {
 
         const r = data[i], g = data[i + 1], b = data[i + 2];
 
-        for (let j = 0; j < parsedSources.length; j++) {
-            const s = parsedSources[j];
-            const dist = rgbDistance(r, g, b, s.src.r, s.src.g, s.src.b);
+        for (let j = 0; j < parsedRules.length; j++) {
+            const rule = parsedRules[j];
+            const dist = rgbDistance(r, g, b, rule.src.r, rule.src.g, rule.src.b);
 
-            if (dist <= s.tol) {
-                data[i] = tgt.r;
-                data[i + 1] = tgt.g;
-                data[i + 2] = tgt.b;
+            if (dist <= rule.tol) {
+                data[i] = rule.tgt.r;
+                data[i + 1] = rule.tgt.g;
+                data[i + 2] = rule.tgt.b;
                 break;
             }
         }
@@ -125,7 +125,7 @@ const applySourcesToImageData = (imageData, sources, globalNewColor) => {
     return new ImageData(data, width, height);
 };
 
-const encodeRecoloredGif = (originalFrames, sources, globalNewColor) => {
+const encodeRecoloredGif = (originalFrames, rules) => {
     if (originalFrames.length === 0) return null;
 
     const width = originalFrames[0].width;
@@ -133,7 +133,7 @@ const encodeRecoloredGif = (originalFrames, sources, globalNewColor) => {
     const gif = GIFEncoder();
 
     for (const frame of originalFrames) {
-        const recolored = applySourcesToImageData(frame.imageData, sources, globalNewColor);
+        const recolored = applyRulesToImageData(frame.imageData, rules);
 
         const keyColor = getUnusedColor(recolored);
         const rgbaPixels = new Uint8Array(width * height * 4);
@@ -172,10 +172,10 @@ const encodeRecoloredGif = (originalFrames, sources, globalNewColor) => {
 };
 
 self.onmessage = async (e) => {
-    const { id, arrayBuffer, sources, globalNewColor } = e.data;
+    const { id, arrayBuffer, rules } = e.data;
     try {
         const frames = decodeGifInWorker(arrayBuffer);
-        const encodedBytes = encodeRecoloredGif(frames, sources, globalNewColor);
+        const encodedBytes = encodeRecoloredGif(frames, rules);
         if (!encodedBytes) {
             self.postMessage({ id, status: 'error', error: 'GIF has no frames to encode' });
             return;

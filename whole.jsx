@@ -136,31 +136,31 @@ const decodeGif = async (arrayBuffer) => {
     return frames;
 };
 
-const applySourcesToImageData = (imageData, sources, globalNewColor) => {
+const applyRulesToImageData = (imageData, rules) => {
     const data = new Uint8ClampedArray(imageData.data);
     const width = imageData.width;
     const height = imageData.height;
 
-    const tgt = hexToRgb(globalNewColor);
-    const parsedSources = sources.map(s => ({
-        src: hexToRgb(s.source),
-        tol: (s.tolerance / 100) * MAX_COLOR_DIST
+    const parsedRules = rules.map(r => ({
+        src: hexToRgb(r.srcHex),
+        tgt: hexToRgb(r.tgtHex),
+        tol: (r.tol / 100) * MAX_COLOR_DIST
     }));
 
     for (let i = 0; i < data.length; i += 4) {
-        if (data[i + 3] === 0) continue; // Skip fully transparent pixels
+        if (data[i + 3] === 0) continue;
 
         const r = data[i], g = data[i + 1], b = data[i + 2];
 
-        for (let j = 0; j < parsedSources.length; j++) {
-            const s = parsedSources[j];
-            const dist = rgbDistance(r, g, b, s.src.r, s.src.g, s.src.b);
+        for (let j = 0; j < parsedRules.length; j++) {
+            const rule = parsedRules[j];
+            const dist = rgbDistance(r, g, b, rule.src.r, rule.src.g, rule.src.b);
 
-            if (dist <= s.tol) {
-                data[i] = tgt.r;
-                data[i + 1] = tgt.g;
-                data[i + 2] = tgt.b;
-                break; // Apply first matching source
+            if (dist <= rule.tol) {
+                data[i] = rule.tgt.r;
+                data[i + 1] = rule.tgt.g;
+                data[i + 2] = rule.tgt.b;
+                break;
             }
         }
     }
@@ -235,17 +235,39 @@ export default function App() {
     ]);
     const [globalNewColor, setGlobalNewColor] = useState('#0000ff');
     const [activeSourceId, setActiveSourceId] = useState('1');
+
+    // --- ADVANCED SETTINGS STATE ---
+    const [showAdvanced, setShowAdvanced] = useState(false);
+    const [outputMode, setOutputMode] = useState('single'); // 'single', 'multi', 'variants'
+    const [outputSuffix, setOutputSuffix] = useState('_recolored');
+    const [multiMappings, setMultiMappings] = useState([{ id: '1', target: '#ff0000', replacement: '#0000ff', tolerance: 20 }]);
+    const [variants, setVariants] = useState([{ id: '1', name: 'Blue Variant', rules: [{ id: '1', target: '#ff0000', replacement: '#0000ff', tolerance: 20 }] }]);
+    const [selectedVariantId, setSelectedVariantId] = useState('1');
+
+    const getActiveRules = useCallback(() => {
+        if (outputMode === 'single') {
+            return sources.map(s => ({ srcHex: safeHex(s.source), tgtHex: safeHex(globalNewColor), tol: s.tolerance }));
+        } else if (outputMode === 'multi') {
+            return multiMappings.map(m => ({ srcHex: safeHex(m.target), tgtHex: safeHex(m.replacement), tol: m.tolerance }));
+        } else if (outputMode === 'variants') {
+            const v = variants.find(v => v.id === selectedVariantId) || variants[0];
+            if (!v) return [];
+            return v.rules.map(r => ({ srcHex: safeHex(r.target), tgtHex: safeHex(r.replacement), tol: r.tolerance }));
+        }
+        return [];
+    }, [outputMode, sources, globalNewColor, multiMappings, variants, selectedVariantId]);
+
     const [isProcessing, setIsProcessing] = useState(false);
     const [isPlaying, setIsPlaying] = useState(true);
 
     // Reset file statuses when color rules change so re-processing works
     const resetFilesToIdle = useCallback(() => {
-        setFiles(prev => prev.map(f => f.status === 'done' ? { ...f, status: 'idle', processedBlob: undefined } : f));
-    }, []);
+        setFiles(prev => prev.map(f => f.status === 'done' || f.status === 'error' ? { ...f, status: 'idle', processedBlob: undefined, processedOutputs: undefined } : f));
+    }, [setFiles]);
 
     useEffect(() => {
         resetFilesToIdle();
-    }, [sources, globalNewColor, resetFilesToIdle]);
+    }, [getActiveRules, outputMode, outputSuffix, resetFilesToIdle]);
 
     // Live Preview State
     const [previewFrames, setPreviewFrames] = useState([]);
@@ -276,9 +298,19 @@ export default function App() {
             .map(v => v.toString(16).padStart(2, '0'))
             .join('');
 
-        setSources(prev => prev.map(s =>
-            s.id === activeSourceId ? { ...s, source: hex } : s
-        ));
+        if (outputMode === 'single') {
+            setSources(prev => prev.map(s => s.id === activeSourceId ? { ...s, source: hex } : s));
+        } else if (outputMode === 'multi') {
+            setMultiMappings(prev => prev.map(m => m.id === activeSourceId ? { ...m, target: hex } : m));
+        } else if (outputMode === 'variants') {
+            setVariants(prev => prev.map(v => {
+                if (v.id !== selectedVariantId) return v;
+                return {
+                    ...v,
+                    rules: v.rules.map(r => r.id === activeSourceId ? { ...r, target: hex } : r)
+                };
+            }));
+        }
     };
 
     // --- FILE HANDLING ---
@@ -308,8 +340,8 @@ export default function App() {
         const fileToRemove = files.find(f => f.id === id);
         if (fileToRemove) {
             URL.revokeObjectURL(fileToRemove.dataUrl);
-            if (fileToRemove.processedBlob) {
-                // There isn't an object URL stored for processedBlob in the state, but we can clean up if we ever added one
+            if (fileToRemove.processedOutputs) {
+                // Not storing object URLs right now but safe
             }
         }
         setFiles(prev => prev.filter(f => f.id !== id));
@@ -399,11 +431,12 @@ export default function App() {
                         originalCanvasRef.current.height = frame.height;
                         oCtx.putImageData(frame.imageData, 0, 0);
 
-                        // Apply rules and draw recolored (only if color is valid hex)
+                        // Apply rules and draw recolored
                         recoloredCanvasRef.current.width = frame.width;
                         recoloredCanvasRef.current.height = frame.height;
-                        if (isValidHex(globalNewColor) && sources.every(s => isValidHex(s.source))) {
-                            const recoloredData = applySourcesToImageData(frame.imageData, sources, globalNewColor);
+                        const rules = getActiveRules();
+                        if (rules.every(r => isValidHex(r.srcHex) && isValidHex(r.tgtHex))) {
+                            const recoloredData = applyRulesToImageData(frame.imageData, rules);
                             rCtx.putImageData(recoloredData, 0, 0);
                         } else {
                             // Show original when colors are invalid (mid-typing)
@@ -423,7 +456,7 @@ export default function App() {
 
         animationRef.current = requestAnimationFrame(drawFrame);
         return () => cancelAnimationFrame(animationRef.current);
-    }, [previewFrames, sources, globalNewColor, isPlaying]);
+    }, [previewFrames, getActiveRules, isPlaying]);
 
 
     // --- BATCH PROCESSING ---
@@ -435,6 +468,21 @@ export default function App() {
             setIsProcessing(false);
             return;
         }
+        
+        const jobs = (() => {
+            if (outputMode === 'single') {
+                return [{ nameSuffix: outputSuffix, rules: sources.map(s => ({ srcHex: safeHex(s.source), tgtHex: safeHex(globalNewColor), tol: s.tolerance })) }];
+            } else if (outputMode === 'multi') {
+                return [{ nameSuffix: outputSuffix, rules: multiMappings.map(m => ({ srcHex: safeHex(m.target), tgtHex: safeHex(m.replacement), tol: m.tolerance })) }];
+            } else if (outputMode === 'variants') {
+                return variants.map(v => ({
+                    nameSuffix: `_${v.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}`,
+                    variantName: v.name,
+                    rules: v.rules.map(r => ({ srcHex: safeHex(r.target), tgtHex: safeHex(r.replacement), tol: r.tolerance }))
+                }));
+            }
+            return [];
+        })();
 
         if (mode === 'gif') {
             const worker = new Worker(new URL('./src/gifWorker.js', import.meta.url), { type: 'module' });
@@ -454,37 +502,43 @@ export default function App() {
                 }
 
                 setFiles(prev => prev.map(f => f.id === fileObj.id ? { ...f, status: 'processing' } : f));
+                let outputs = [];
+                let hasError = false;
 
                 try {
                     const buffer = await fileObj.file.arrayBuffer();
-                    const result = await new Promise((resolve, reject) => {
-                        workerErrorListeners.push(reject);
+                    
+                    for (const job of jobs) {
+                        const result = await new Promise((resolve, reject) => {
+                            workerErrorListeners.push(reject);
 
-                        const handleMessage = (e) => {
-                            if (e.data.id === fileObj.id) {
-                                worker.removeEventListener('message', handleMessage);
-                                const idx = workerErrorListeners.indexOf(reject);
-                                if (idx !== -1) workerErrorListeners.splice(idx, 1);
+                            const handleMessage = (e) => {
+                                if (e.data.id === fileObj.id) {
+                                    worker.removeEventListener('message', handleMessage);
+                                    const idx = workerErrorListeners.indexOf(reject);
+                                    if (idx !== -1) workerErrorListeners.splice(idx, 1);
 
-                                if (e.data.status === 'done') {
-                                    resolve(e.data.bytes);
-                                } else {
-                                    reject(new Error(e.data.error || 'Worker error'));
+                                    if (e.data.status === 'done') {
+                                        resolve(e.data.bytes);
+                                    } else {
+                                        reject(new Error(e.data.error || 'Worker error'));
+                                    }
                                 }
-                            }
-                        };
-                        worker.addEventListener('message', handleMessage);
-                        worker.postMessage({
-                            id: fileObj.id,
-                            arrayBuffer: buffer,
-                            sources,
-                            globalNewColor
-                        }, [buffer]);
-                    });
+                            };
+                            worker.addEventListener('message', handleMessage);
+                            const jobBuffer = buffer.slice(0);
+                            worker.postMessage({
+                                id: fileObj.id,
+                                arrayBuffer: jobBuffer,
+                                rules: job.rules
+                            }, [jobBuffer]);
+                        });
+                        const blob = new Blob([result], { type: 'image/gif' });
+                        outputs.push({ blob, nameSuffix: job.nameSuffix, variantName: job.variantName });
+                    }
 
-                    const blob = new Blob([result], { type: 'image/gif' });
                     setFiles(prev => prev.map(f =>
-                        f.id === fileObj.id ? { ...f, status: 'done', processedBlob: blob } : f
+                        f.id === fileObj.id ? { ...f, status: 'done', processedOutputs: outputs } : f
                     ));
                 } catch (err) {
                     console.error(`Error processing ${fileObj.name}:`, err);
@@ -497,6 +551,9 @@ export default function App() {
         } else {
             for (const fileObj of pendingFiles) {
                 setFiles(prev => prev.map(f => f.id === fileObj.id ? { ...f, status: 'processing' } : f));
+                let outputs = [];
+                let hasError = false;
+
                 try {
                     const img = new Image();
                     img.src = fileObj.dataUrl;
@@ -509,23 +566,27 @@ export default function App() {
                     canvas.width = img.width;
                     canvas.height = img.height;
                     const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                    ctx.drawImage(img, 0, 0);
-                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                     
-                    await new Promise(resolve => setTimeout(resolve, 0)); // Allow UI to update
-                    
-                    const recoloredData = applySourcesToImageData(imageData, sources, globalNewColor);
-                    ctx.putImageData(recoloredData, 0, 0);
-                    
-                    let outType = fileObj.file.type;
-                    if (!['image/jpeg', 'image/png', 'image/webp'].includes(outType)) {
-                        outType = 'image/png';
+                    for (const job of jobs) {
+                        ctx.drawImage(img, 0, 0);
+                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        
+                        await new Promise(resolve => setTimeout(resolve, 0)); // Allow UI to update
+                        
+                        const recoloredData = applyRulesToImageData(imageData, job.rules);
+                        ctx.putImageData(recoloredData, 0, 0);
+                        
+                        let outType = fileObj.file.type;
+                        if (!['image/jpeg', 'image/png', 'image/webp'].includes(outType)) {
+                            outType = 'image/png';
+                        }
+                        
+                        const blob = await new Promise(resolve => canvas.toBlob(resolve, outType));
+                        outputs.push({ blob, nameSuffix: job.nameSuffix, variantName: job.variantName });
                     }
                     
-                    const blob = await new Promise(resolve => canvas.toBlob(resolve, outType));
-                    
                     setFiles(prev => prev.map(f =>
-                        f.id === fileObj.id ? { ...f, status: 'done', processedBlob: blob } : f
+                        f.id === fileObj.id ? { ...f, status: 'done', processedOutputs: outputs } : f
                     ));
                 } catch (err) {
                     console.error(`Error processing ${fileObj.name}:`, err);
@@ -543,9 +604,20 @@ export default function App() {
         let count = 0;
 
         files.forEach(f => {
-            if (f.status === 'done' && f.processedBlob) {
-                zip.file(`recolored-${f.name}`, f.processedBlob);
-                count++;
+            if (f.status === 'done' && f.processedOutputs) {
+                f.processedOutputs.forEach(out => {
+                    const extIndex = f.name.lastIndexOf('.');
+                    const namePart = extIndex !== -1 ? f.name.substring(0, extIndex) : f.name;
+                    const extPart = extIndex !== -1 ? f.name.substring(extIndex) : '';
+                    
+                    const newName = `${namePart}${out.nameSuffix}${extPart}`;
+                    if (outputMode === 'variants') {
+                        zip.file(`${out.variantName}/${newName}`, out.blob);
+                    } else {
+                        zip.file(newName, out.blob);
+                    }
+                    count++;
+                });
             }
         });
 
@@ -562,16 +634,44 @@ export default function App() {
         URL.revokeObjectURL(url);
     };
 
-    const downloadSingle = (file) => {
-        if (!file.processedBlob) return;
-        const url = URL.createObjectURL(file.processedBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `recolored-${file.name}`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+    const downloadSingle = async (file) => {
+        if (!file.processedOutputs || file.processedOutputs.length === 0) return;
+        
+        if (file.processedOutputs.length === 1) {
+            const out = file.processedOutputs[0];
+            const extIndex = file.name.lastIndexOf('.');
+            const namePart = extIndex !== -1 ? file.name.substring(0, extIndex) : file.name;
+            const extPart = extIndex !== -1 ? file.name.substring(extIndex) : '';
+            const newName = `${namePart}${out.nameSuffix}${extPart}`;
+            
+            const url = URL.createObjectURL(out.blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = newName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } else {
+            // For variants on a single file, download a mini-zip
+            const zip = new JSZip();
+            file.processedOutputs.forEach(out => {
+                const extIndex = file.name.lastIndexOf('.');
+                const namePart = extIndex !== -1 ? file.name.substring(0, extIndex) : file.name;
+                const extPart = extIndex !== -1 ? file.name.substring(extIndex) : '';
+                const newName = `${namePart}${out.nameSuffix}${extPart}`;
+                zip.file(newName, out.blob);
+            });
+            const zipBlob = await zip.generateAsync({ type: 'blob' });
+            const url = URL.createObjectURL(zipBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `variants-${file.name}.zip`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
     };
 
     // --- UI COMPONENTS ---
@@ -750,101 +850,312 @@ export default function App() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ scrollbarWidth: 'thin', scrollbarColor: '#374151 transparent' }}>
-                    {/* Global New Color Input */}
-                    <div className="bg-gray-800/60 border border-blue-500/30 p-4 rounded-xl">
-                        <label className="text-xs text-blue-400 font-bold uppercase tracking-wider mb-3 block">New Color (Applied to all below)</label>
-                        <div className="flex items-center gap-2 bg-gray-900 p-2 rounded-lg border border-gray-700 focus-within:border-blue-500 transition-colors">
-                            <input
-                                type="color"
-                                value={safeHex(globalNewColor)}
-                                onChange={(e) => setGlobalNewColor(e.target.value)}
-                                className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0 shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
-                                aria-label="Select Global New Color"
-                            />
-                            <input 
-                                type="text" 
-                                value={globalNewColor}
-                                onChange={(e) => setGlobalNewColor(e.target.value)}
-                                className="w-24 bg-transparent border-0 text-sm text-gray-300 uppercase focus:ring-0 p-0 outline-none font-mono"
-                                maxLength={7}
-                                spellCheck={false}
-                                aria-label="Enter Global New Color Hex"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider pt-2 border-t border-gray-800 mt-4">Target Colors to Replace</div>
-                    
-                    {sources.map((source, idx) => (
-                        <div 
-                            key={source.id} 
-                            onClick={() => setActiveSourceId(source.id)}
-                            className={`bg-gray-800/60 border p-4 rounded-xl relative cursor-pointer transition-all ${activeSourceId === source.id ? 'border-blue-500 ring-1 ring-blue-500/50 shadow-lg shadow-blue-900/20' : 'border-gray-700 hover:border-gray-500'}`}
-                        >
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    const newSources = sources.filter(s => s.id !== source.id);
-                                    setSources(newSources);
-                                    if (activeSourceId === source.id && newSources.length > 0) {
-                                        setActiveSourceId(newSources[0].id);
-                                    }
-                                }}
-                                className="absolute top-1 right-1 p-2 text-gray-500 hover:text-red-400 hover:bg-gray-800 rounded-lg z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 transition-colors"
-                                aria-label={`Delete Target Color ${idx + 1}`}
-                            >
-                                <Trash2 className="w-4 h-4" />
-                            </button>
-
-                            <div className="text-xs font-medium text-gray-400 mb-3 uppercase tracking-wide">Target Color {idx + 1}</div>
-
-                            <div className="flex items-center gap-2 bg-gray-900 p-1.5 rounded-lg border border-gray-700 focus-within:border-blue-500 transition-colors mb-4">
-                                <input
-                                    type="color"
-                                    value={safeHex(source.source)}
-                                    onChange={(e) => setSources(sources.map(s => s.id === source.id ? { ...s, source: e.target.value } : s))}
-                                    className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0 shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
-                                    aria-label={`Select Target Color ${idx + 1}`}
-                                />
-                                <input 
-                                    type="text" 
-                                    value={source.source}
-                                    onChange={(e) => setSources(sources.map(s => s.id === source.id ? { ...s, source: e.target.value } : s))}
-                                    className="w-14 min-w-0 bg-transparent border-0 text-xs text-gray-300 uppercase focus:ring-0 p-0 outline-none"
-                                    maxLength={7}
-                                    spellCheck={false}
-                                    aria-label={`Enter Target Color ${idx + 1} Hex`}
-                                />
-                            </div>
-
-                            <div className="flex flex-col gap-2 pt-4 border-t border-gray-700/50">
-                                <div className="flex justify-between items-center">
-                                    <label className="text-xs text-gray-400">Match Range (Tolerance)</label>
-                                    <span className="text-xs text-blue-400 font-medium">{source.tolerance}%</span>
+                    {outputMode === 'single' && (
+                        <>
+                            {/* Global New Color Input */}
+                            <div className="bg-gray-800/60 border border-blue-500/30 p-4 rounded-xl">
+                                <label className="text-xs text-blue-400 font-bold uppercase tracking-wider mb-3 block">New Color (Applied to all below)</label>
+                                <div className="flex items-center gap-2 bg-gray-900 p-2 rounded-lg border border-gray-700 focus-within:border-blue-500 transition-colors">
+                                    <input
+                                        type="color"
+                                        value={safeHex(globalNewColor)}
+                                        onChange={(e) => setGlobalNewColor(e.target.value)}
+                                        className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0 shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                                        aria-label="Select Global New Color"
+                                    />
+                                    <input 
+                                        type="text" 
+                                        value={globalNewColor}
+                                        onChange={(e) => setGlobalNewColor(e.target.value)}
+                                        className="w-24 bg-transparent border-0 text-sm text-gray-300 uppercase focus:ring-0 p-0 outline-none font-mono"
+                                        maxLength={7}
+                                        spellCheck={false}
+                                        aria-label="Enter Global New Color Hex"
+                                    />
                                 </div>
-                                <input
-                                    type="range"
-                                    min="0" max="100"
-                                    value={source.tolerance}
-                                    onChange={(e) => setSources(sources.map(s => s.id === source.id ? { ...s, tolerance: parseInt(e.target.value) } : s))}
-                                    className="w-full accent-blue-500 bg-gray-700 h-1.5 rounded-lg appearance-none cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
-                                    aria-label={`Match Range for Target Color ${idx + 1}`}
-                                />
-                                <span className="text-[10px] text-gray-500 leading-tight">Increase to include similar surrounding colors (anti-aliasing, compression noise)</span>
                             </div>
-                        </div>
-                    ))}
 
-                    <button
-                        onClick={() => {
-                            const newId = Math.random().toString();
-                            setSources([...sources, { id: newId, source: '#ffffff', tolerance: 20 }]);
-                            setActiveSourceId(newId);
-                        }}
-                        className="w-full py-2.5 flex items-center justify-center gap-2 text-sm text-gray-400 border border-dashed border-gray-700 rounded-xl hover:border-blue-500 hover:text-blue-400 transition-colors"
-                    >
-                        <Plus className="w-4 h-4" /> Add Target Color
-                    </button>
+                            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider pt-2 border-t border-gray-800 mt-4">Target Colors to Replace</div>
+                            
+                            {sources.map((source, idx) => (
+                                <div 
+                                    key={source.id} 
+                                    onClick={() => setActiveSourceId(source.id)}
+                                    className={`bg-gray-800/60 border p-4 rounded-xl relative cursor-pointer transition-all ${activeSourceId === source.id ? 'border-blue-500 ring-1 ring-blue-500/50 shadow-lg shadow-blue-900/20' : 'border-gray-700 hover:border-gray-500'}`}
+                                >
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const newSources = sources.filter(s => s.id !== source.id);
+                                            setSources(newSources);
+                                            if (activeSourceId === source.id && newSources.length > 0) {
+                                                setActiveSourceId(newSources[0].id);
+                                            }
+                                        }}
+                                        className="absolute top-1 right-1 p-2 text-gray-500 hover:text-red-400 hover:bg-gray-800 rounded-lg z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 transition-colors"
+                                        aria-label={`Delete Target Color ${idx + 1}`}
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+
+                                    <div className="text-xs font-medium text-gray-400 mb-3 uppercase tracking-wide">Target Color {idx + 1}</div>
+
+                                    <div className="flex items-center gap-2 bg-gray-900 p-1.5 rounded-lg border border-gray-700 focus-within:border-blue-500 transition-colors mb-4">
+                                        <input
+                                            type="color"
+                                            value={safeHex(source.source)}
+                                            onChange={(e) => setSources(sources.map(s => s.id === source.id ? { ...s, source: e.target.value } : s))}
+                                            className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0 shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                                            aria-label={`Select Target Color ${idx + 1}`}
+                                        />
+                                        <input 
+                                            type="text" 
+                                            value={source.source}
+                                            onChange={(e) => setSources(sources.map(s => s.id === source.id ? { ...s, source: e.target.value } : s))}
+                                            className="w-14 min-w-0 bg-transparent border-0 text-xs text-gray-300 uppercase focus:ring-0 p-0 outline-none"
+                                            maxLength={7}
+                                            spellCheck={false}
+                                            aria-label={`Enter Target Color ${idx + 1} Hex`}
+                                        />
+                                    </div>
+
+                                    <div className="flex flex-col gap-2 pt-4 border-t border-gray-700/50">
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-xs text-gray-400">Match Range (Tolerance)</label>
+                                            <span className="text-xs text-blue-400 font-medium">{source.tolerance}%</span>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            min="0" max="100"
+                                            value={source.tolerance}
+                                            onChange={(e) => setSources(sources.map(s => s.id === source.id ? { ...s, tolerance: parseInt(e.target.value) } : s))}
+                                            className="w-full accent-blue-500 bg-gray-700 h-1.5 rounded-lg appearance-none cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                                            aria-label={`Match Range for Target Color ${idx + 1}`}
+                                        />
+                                        <span className="text-[10px] text-gray-500 leading-tight">Increase to include similar surrounding colors (anti-aliasing, compression noise)</span>
+                                    </div>
+                                </div>
+                            ))}
+
+                            <button
+                                onClick={() => {
+                                    const newId = Math.random().toString();
+                                    setSources([...sources, { id: newId, source: '#ffffff', tolerance: 20 }]);
+                                    setActiveSourceId(newId);
+                                }}
+                                className="w-full py-2.5 flex items-center justify-center gap-2 text-sm text-gray-400 border border-dashed border-gray-700 rounded-xl hover:border-blue-500 hover:text-blue-400 transition-colors"
+                            >
+                                <Plus className="w-4 h-4" /> Add Target Color
+                            </button>
+                        </>
+                    )}
+
+                    {outputMode === 'multi' && (
+                        <>
+                            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Multi-Color Mapping</div>
+                            {multiMappings.map((mapping, idx) => (
+                                <div 
+                                    key={mapping.id} 
+                                    onClick={() => setActiveSourceId(mapping.id)}
+                                    className={`bg-gray-800/60 border p-4 rounded-xl relative cursor-pointer transition-all ${activeSourceId === mapping.id ? 'border-purple-500 ring-1 ring-purple-500/50 shadow-lg shadow-purple-900/20' : 'border-gray-700 hover:border-gray-500'}`}
+                                >
+                                    <div className="flex justify-between items-center mb-3">
+                                        <div className="text-xs font-medium text-gray-400 uppercase tracking-wide">Mapping {idx + 1}</div>
+                                        <div className="flex items-center gap-2 z-10">
+                                            <button onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (idx === 0) return;
+                                                const newM = [...multiMappings];
+                                                [newM[idx-1], newM[idx]] = [newM[idx], newM[idx-1]];
+                                                setMultiMappings(newM);
+                                            }} className="text-gray-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed" disabled={idx === 0}>
+                                                <ChevronUp className="w-4 h-4"/>
+                                            </button>
+                                            <button onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (idx === multiMappings.length - 1) return;
+                                                const newM = [...multiMappings];
+                                                [newM[idx+1], newM[idx]] = [newM[idx], newM[idx+1]];
+                                                setMultiMappings(newM);
+                                            }} className="text-gray-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed" disabled={idx === multiMappings.length - 1}>
+                                                <ChevronDown className="w-4 h-4"/>
+                                            </button>
+                                            <button onClick={(e) => {
+                                                e.stopPropagation();
+                                                const newM = multiMappings.filter(m => m.id !== mapping.id);
+                                                setMultiMappings(newM);
+                                                if (activeSourceId === mapping.id && newM.length > 0) setActiveSourceId(newM[0].id);
+                                            }} className="text-gray-500 hover:text-red-400">
+                                                <Trash2 className="w-4 h-4"/>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <div className="flex-1">
+                                            <label className="text-[10px] text-gray-500 block mb-1 uppercase tracking-wider">Target</label>
+                                            <div className="flex items-center gap-2 bg-gray-900 p-1.5 rounded border border-gray-700">
+                                                <input type="color" value={safeHex(mapping.target)} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, target: e.target.value} : m))} className="w-6 h-6 rounded shrink-0 p-0 border-0 bg-transparent cursor-pointer"/>
+                                                <input type="text" value={mapping.target} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, target: e.target.value} : m))} className="w-14 bg-transparent border-0 text-xs text-gray-300 uppercase p-0 outline-none" maxLength={7}/>
+                                            </div>
+                                        </div>
+                                        <div className="text-gray-600">→</div>
+                                        <div className="flex-1">
+                                            <label className="text-[10px] text-gray-500 block mb-1 uppercase tracking-wider">Replace</label>
+                                            <div className="flex items-center gap-2 bg-gray-900 p-1.5 rounded border border-gray-700">
+                                                <input type="color" value={safeHex(mapping.replacement)} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, replacement: e.target.value} : m))} className="w-6 h-6 rounded shrink-0 p-0 border-0 bg-transparent cursor-pointer"/>
+                                                <input type="text" value={mapping.replacement} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, replacement: e.target.value} : m))} className="w-14 bg-transparent border-0 text-xs text-gray-300 uppercase p-0 outline-none" maxLength={7}/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex flex-col gap-2 pt-2 border-t border-gray-700/50">
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-[10px] text-gray-400">Tolerance</label>
+                                            <span className="text-[10px] text-purple-400 font-medium">{mapping.tolerance}%</span>
+                                        </div>
+                                        <input type="range" min="0" max="100" value={mapping.tolerance} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, tolerance: parseInt(e.target.value)} : m))} className="w-full accent-purple-500 bg-gray-700 h-1 rounded-lg appearance-none cursor-pointer"/>
+                                    </div>
+                                </div>
+                            ))}
+                            <button onClick={() => {
+                                const newId = Math.random().toString();
+                                setMultiMappings([...multiMappings, { id: newId, target: '#ffffff', replacement: '#0000ff', tolerance: 20 }]);
+                                setActiveSourceId(newId);
+                            }} className="w-full py-2 text-sm text-gray-400 border border-dashed border-gray-700 rounded-xl hover:border-purple-500 hover:text-purple-400 transition-colors">
+                                + Add Color Mapping
+                            </button>
+                        </>
+                    )}
+
+                    {outputMode === 'variants' && (
+                        <>
+                            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Color Variants</div>
+                            <div className="bg-gray-800/60 p-4 rounded-xl border border-gray-700 mb-4">
+                                <label className="text-xs text-gray-400 uppercase tracking-wider block mb-2">Preview Variant</label>
+                                <select 
+                                    value={selectedVariantId} 
+                                    onChange={(e) => setSelectedVariantId(e.target.value)}
+                                    className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-sm text-white focus:outline-none focus:border-green-500"
+                                >
+                                    {variants.map((v, i) => <option key={v.id} value={v.id}>Variant {i + 1}: {v.name}</option>)}
+                                </select>
+                            </div>
+
+                            {variants.map((variant, vIdx) => (
+                                <div key={variant.id} className={`bg-gray-800/40 border p-4 rounded-xl relative transition-all ${selectedVariantId === variant.id ? 'border-green-500 ring-1 ring-green-500/50 shadow-lg' : 'border-gray-700'}`}>
+                                    <div className="flex justify-between items-center mb-3">
+                                        <div className="text-xs font-medium text-gray-400 uppercase tracking-wide">Variant {vIdx + 1}</div>
+                                        <button onClick={() => {
+                                            const newV = variants.filter(v => v.id !== variant.id);
+                                            setVariants(newV);
+                                            if (selectedVariantId === variant.id && newV.length > 0) setSelectedVariantId(newV[0].id);
+                                        }} className="text-gray-500 hover:text-red-400">
+                                            <Trash2 className="w-4 h-4"/>
+                                        </button>
+                                    </div>
+                                    <div className="mb-4">
+                                        <label className="text-[10px] text-gray-500 uppercase block mb-1">Variant Name</label>
+                                        <input type="text" value={variant.name} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, name: e.target.value} : v))} className="w-full bg-gray-900 border border-gray-700 rounded p-1.5 text-sm text-gray-200 outline-none focus:border-green-500"/>
+                                    </div>
+                                    
+                                    <div className="space-y-3">
+                                        {variant.rules.map((rule, rIdx) => (
+                                            <div key={rule.id} onClick={() => { setSelectedVariantId(variant.id); setActiveSourceId(rule.id); }} className={`bg-gray-900 p-3 rounded-lg border ${selectedVariantId === variant.id && activeSourceId === rule.id ? 'border-green-500' : 'border-gray-700'} cursor-pointer`}>
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <span className="text-[10px] text-gray-500">Rule {rIdx + 1}</span>
+                                                    <button onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setVariants(variants.map(v => v.id === variant.id ? {...v, rules: v.rules.filter(r => r.id !== rule.id)} : v));
+                                                    }} className="text-gray-600 hover:text-red-400"><Trash2 className="w-3 h-3"/></button>
+                                                </div>
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <input type="color" value={safeHex(rule.target)} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, rules: v.rules.map(r => r.id === rule.id ? {...r, target: e.target.value} : r)} : v))} className="w-6 h-6 rounded p-0 border-0 bg-transparent shrink-0 cursor-pointer"/>
+                                                    <span className="text-gray-600">→</span>
+                                                    <input type="color" value={safeHex(rule.replacement)} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, rules: v.rules.map(r => r.id === rule.id ? {...r, replacement: e.target.value} : r)} : v))} className="w-6 h-6 rounded p-0 border-0 bg-transparent shrink-0 cursor-pointer"/>
+                                                </div>
+                                                <input type="range" min="0" max="100" value={rule.tolerance} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, rules: v.rules.map(r => r.id === rule.id ? {...r, tolerance: parseInt(e.target.value)} : r)} : v))} className="w-full accent-green-500 bg-gray-700 h-1 rounded-lg appearance-none cursor-pointer"/>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <button onClick={() => {
+                                        const newRule = { id: Math.random().toString(), target: '#ffffff', replacement: '#00ff00', tolerance: 20 };
+                                        setVariants(variants.map(v => v.id === variant.id ? {...v, rules: [...v.rules, newRule]} : v));
+                                        setSelectedVariantId(variant.id);
+                                        setActiveSourceId(newRule.id);
+                                    }} className="w-full py-1.5 mt-3 text-xs text-gray-500 border border-dashed border-gray-700 rounded hover:border-green-500 hover:text-green-400 transition-colors">+ Add Rule</button>
+                                </div>
+                            ))}
+                            
+                            <button onClick={() => {
+                                const newV = { id: Math.random().toString(), name: `Variant ${variants.length + 1}`, rules: [{ id: Math.random().toString(), target: '#ffffff', replacement: '#00ff00', tolerance: 20 }] };
+                                setVariants([...variants, newV]);
+                                setSelectedVariantId(newV.id);
+                            }} className="w-full py-2 text-sm text-gray-400 border border-dashed border-gray-700 rounded-xl hover:border-green-500 hover:text-green-400 transition-colors">
+                                + Add Variant
+                            </button>
+                        </>
+                    )}
+
+                    {/* ADVANCED SETTINGS TOGGLE */}
+                    <div className="mt-8 pt-4 border-t border-gray-800">
+                        <button 
+                            onClick={() => setShowAdvanced(!showAdvanced)} 
+                            className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors w-full"
+                        >
+                            {showAdvanced ? <ChevronUp className="w-4 h-4"/> : <ChevronDown className="w-4 h-4"/>}
+                            Advanced Settings
+                        </button>
+                        
+                        {showAdvanced && (
+                            <div className="mt-4 space-y-4 p-4 bg-gray-900/60 rounded-xl border border-gray-700">
+                                <div>
+                                    <label className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-3 block">Output Mode</label>
+                                    <div className="space-y-3">
+                                        <label className="flex items-start gap-3 cursor-pointer group">
+                                            <input type="radio" name="outMode" value="single" checked={outputMode === 'single'} onChange={() => setOutputMode('single')} className="mt-0.5 accent-blue-500"/>
+                                            <div>
+                                                <div className="text-sm text-gray-200 group-hover:text-blue-400 transition-colors">Single Color Output</div>
+                                                <div className="text-xs text-gray-500 leading-tight">Replace all selected targets with one new color.</div>
+                                            </div>
+                                        </label>
+                                        <label className="flex items-start gap-3 cursor-pointer group">
+                                            <input type="radio" name="outMode" value="multi" checked={outputMode === 'multi'} onChange={() => setOutputMode('multi')} className="mt-0.5 accent-purple-500"/>
+                                            <div>
+                                                <div className="text-sm text-gray-200 group-hover:text-purple-400 transition-colors">Multi-Color Mapping</div>
+                                                <div className="text-xs text-gray-500 leading-tight">Give each target color its own replacement.</div>
+                                            </div>
+                                        </label>
+                                        <label className="flex items-start gap-3 cursor-pointer group">
+                                            <input type="radio" name="outMode" value="variants" checked={outputMode === 'variants'} onChange={() => setOutputMode('variants')} className="mt-0.5 accent-green-500"/>
+                                            <div>
+                                                <div className="text-sm text-gray-200 group-hover:text-green-400 transition-colors">Color Variants</div>
+                                                <div className="text-xs text-gray-500 leading-tight">Generate multiple recolored versions of the same asset.</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div className="pt-3 border-t border-gray-700/50">
+                                    <label className="text-[10px] text-gray-500 block mb-1 uppercase tracking-wider">Output Suffix</label>
+                                    <input type="text" value={outputSuffix} onChange={(e) => setOutputSuffix(e.target.value)} className="w-full bg-gray-900 border border-gray-600 rounded p-1.5 text-xs text-gray-300 focus:outline-none focus:border-gray-400"/>
+                                </div>
+                                
+                                <div className="pt-3 border-t border-gray-700/50">
+                                    <button onClick={() => {
+                                        setOutputMode('single');
+                                        setSources([{ id: '1', source: '#ff0000', tolerance: 20 }]);
+                                        setGlobalNewColor('#0000ff');
+                                        setMultiMappings([{ id: '1', target: '#ff0000', replacement: '#0000ff', tolerance: 20 }]);
+                                        setVariants([{ id: '1', name: 'Blue Variant', rules: [{ id: '1', target: '#ff0000', replacement: '#0000ff', tolerance: 20 }] }]);
+                                        setOutputSuffix('_recolored');
+                                    }} className="text-xs text-red-500 hover:text-red-400 transition-colors">
+                                        Reset Advanced Settings
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="p-4 border-t border-gray-800 bg-gray-900 flex flex-col gap-3">
