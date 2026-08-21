@@ -2,7 +2,7 @@ import { parseGIF, decompressFrames } from 'gifuct-js';
 import { GIFEncoder, quantize, applyPalette } from 'gifenc';
 
 // --- UTILITIES ---
-const hexToRgb = (hex) => {
+export const hexToRgb = (hex) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? {
         r: parseInt(result[1], 16),
@@ -11,7 +11,7 @@ const hexToRgb = (hex) => {
     } : { r: 0, g: 0, b: 0 };
 };
 
-const rgbDistance = (r1, g1, b1, r2, g2, b2) => {
+export const rgbDistance = (r1, g1, b1, r2, g2, b2) => {
     return Math.sqrt(Math.pow(r1 - r2, 2) + Math.pow(g1 - g2, 2) + Math.pow(b1 - b2, 2));
 };
 
@@ -171,7 +171,7 @@ const encodeRecoloredGif = (originalFrames, rules) => {
     return gif.bytes();
 };
 
-self.onmessage = async (e) => {
+if (typeof self !== "undefined") { self.onmessage = async (e) => {
     const { id, arrayBuffer, rules } = e.data;
     try {
         const frames = decodeGifInWorker(arrayBuffer);
@@ -185,3 +185,4 @@ self.onmessage = async (e) => {
         self.postMessage({ id, status: 'error', error: err.message });
     }
 };
+}
