@@ -141,11 +141,14 @@ const applyRulesToImageData = (imageData, rules) => {
     const width = imageData.width;
     const height = imageData.height;
 
-    const parsedRules = rules.map(r => ({
-        src: hexToRgb(r.srcHex),
-        tgt: hexToRgb(r.tgtHex),
-        tol: (r.tol / 100) * MAX_COLOR_DIST
-    }));
+    const parsedRules = rules.map(r => {
+        const tol = (r.tol / 100) * MAX_COLOR_DIST;
+        return {
+            src: hexToRgb(r.srcHex),
+            tgt: hexToRgb(r.tgtHex),
+            tolSq: tol * tol
+        };
+    });
 
     for (let i = 0; i < data.length; i += 4) {
         if (data[i + 3] === 0) continue;
@@ -154,9 +157,12 @@ const applyRulesToImageData = (imageData, rules) => {
 
         for (let j = 0; j < parsedRules.length; j++) {
             const rule = parsedRules[j];
-            const dist = rgbDistance(r, g, b, rule.src.r, rule.src.g, rule.src.b);
+            const dr = r - rule.src.r;
+            const dg = g - rule.src.g;
+            const db = b - rule.src.b;
+            const distSq = dr * dr + dg * dg + db * db;
 
-            if (dist <= rule.tol) {
+            if (distSq <= rule.tolSq) {
                 data[i] = rule.tgt.r;
                 data[i + 1] = rule.tgt.g;
                 data[i + 2] = rule.tgt.b;
