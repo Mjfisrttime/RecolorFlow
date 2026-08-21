@@ -1,0 +1,3 @@
+## 2026-08-21 - Avoiding Math.pow and Math.sqrt in hot pixel processing loops
+**Learning:** The image processing functions like `applyRulesToImageData` iterate over every single pixel of an image/GIF frame. Inside this hot loop, standard mathematical functions like `Math.sqrt` and `Math.pow` for distance calculations become severe bottlenecks. A benchmark showed calculating distance squared directly (`dr*dr + dg*dg + db*db`) without `Math.sqrt` runs ~23x faster (from 295ms to 12ms for 10M iterations).
+**Action:** When calculating distances for colors or positions inside a loop over image data (e.g. `Uint8ClampedArray`), pre-calculate squared tolerances/thresholds outside the loop and compare them against directly multiplied differences inside the loop.
