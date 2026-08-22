@@ -11,8 +11,12 @@ const hexToRgb = (hex) => {
     } : { r: 0, g: 0, b: 0 };
 };
 
-const rgbDistance = (r1, g1, b1, r2, g2, b2) => {
-    return Math.sqrt(Math.pow(r1 - r2, 2) + Math.pow(g1 - g2, 2) + Math.pow(b1 - b2, 2));
+// Performance optimization: Avoid Math.sqrt and Math.pow in hot loops
+const rgbDistanceSq = (r1, g1, b1, r2, g2, b2) => {
+    const dr = r1 - r2;
+    const dg = g1 - g2;
+    const db = b1 - b2;
+    return dr * dr + dg * dg + db * db;
 };
 
 const MAX_COLOR_DIST = Math.sqrt(3 * Math.pow(255, 2)); // ~441.67
@@ -99,11 +103,14 @@ const applyRulesToImageData = (imageData, rules) => {
     const width = imageData.width;
     const height = imageData.height;
 
-    const parsedRules = rules.map(r => ({
-        src: hexToRgb(r.srcHex),
-        tgt: hexToRgb(r.tgtHex),
-        tol: (r.tol / 100) * MAX_COLOR_DIST
-    }));
+    const parsedRules = rules.map(r => {
+        const tolDist = (r.tol / 100) * MAX_COLOR_DIST;
+        return {
+            src: hexToRgb(r.srcHex),
+            tgt: hexToRgb(r.tgtHex),
+            tolSq: tolDist * tolDist // Store squared tolerance for faster comparison
+        };
+    });
 
     for (let i = 0; i < data.length; i += 4) {
         if (data[i + 3] === 0) continue;
@@ -112,9 +119,9 @@ const applyRulesToImageData = (imageData, rules) => {
 
         for (let j = 0; j < parsedRules.length; j++) {
             const rule = parsedRules[j];
-            const dist = rgbDistance(r, g, b, rule.src.r, rule.src.g, rule.src.b);
+            const distSq = rgbDistanceSq(r, g, b, rule.src.r, rule.src.g, rule.src.b);
 
-            if (dist <= rule.tol) {
+            if (distSq <= rule.tolSq) {
                 data[i] = rule.tgt.r;
                 data[i + 1] = rule.tgt.g;
                 data[i + 2] = rule.tgt.b;
