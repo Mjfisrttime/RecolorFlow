@@ -27,6 +27,14 @@ const isValidHex = (hex) => /^#[0-9a-f]{6}$/i.test(hex);
 const safeHex = (hex) => isValidHex(hex) ? hex : '#000000';
 
 // --- UTILITIES ---
+const sanitizeFileName = (name) => {
+    if (!name) return 'unnamed';
+    // Remove null bytes, path traversal sequences (../, .\), and path separators (/, \)
+    return name.replace(/\0/g, '')
+               .replace(/\.\.+/g, '.')
+               .replace(/[/\\]/g, '_');
+};
+
 const hexToRgb = (hex) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? {
@@ -639,13 +647,16 @@ export default function App() {
         files.forEach(f => {
             if (f.status === 'done' && f.processedOutputs) {
                 f.processedOutputs.forEach(out => {
-                    const extIndex = f.name.lastIndexOf('.');
-                    const namePart = extIndex !== -1 ? f.name.substring(0, extIndex) : f.name;
-                    const extPart = extIndex !== -1 ? f.name.substring(extIndex) : '';
+                    const safeFileName = sanitizeFileName(f.name);
+                    const extIndex = safeFileName.lastIndexOf('.');
+                    const namePart = extIndex !== -1 ? safeFileName.substring(0, extIndex) : safeFileName;
+                    const extPart = extIndex !== -1 ? safeFileName.substring(extIndex) : '';
                     
-                    const newName = `${namePart}${out.nameSuffix}${extPart}`;
+                    const safeSuffix = sanitizeFileName(out.nameSuffix || '');
+                    const newName = `${namePart}${safeSuffix}${extPart}`;
                     if (outputMode === 'variants') {
-                        zip.file(`${out.variantName}/${newName}`, out.blob);
+                        const safeVariantName = sanitizeFileName(out.variantName || 'variant');
+                        zip.file(`${safeVariantName}/${newName}`, out.blob);
                     } else {
                         zip.file(newName, out.blob);
                     }
@@ -670,12 +681,15 @@ export default function App() {
     const downloadSingle = async (file) => {
         if (!file.processedOutputs || file.processedOutputs.length === 0) return;
         
+        const safeFileName = sanitizeFileName(file.name);
         if (file.processedOutputs.length === 1) {
             const out = file.processedOutputs[0];
-            const extIndex = file.name.lastIndexOf('.');
-            const namePart = extIndex !== -1 ? file.name.substring(0, extIndex) : file.name;
-            const extPart = extIndex !== -1 ? file.name.substring(extIndex) : '';
-            const newName = `${namePart}${out.nameSuffix}${extPart}`;
+            const extIndex = safeFileName.lastIndexOf('.');
+            const namePart = extIndex !== -1 ? safeFileName.substring(0, extIndex) : safeFileName;
+            const extPart = extIndex !== -1 ? safeFileName.substring(extIndex) : '';
+
+            const safeSuffix = sanitizeFileName(out.nameSuffix || '');
+            const newName = `${namePart}${safeSuffix}${extPart}`;
             
             const url = URL.createObjectURL(out.blob);
             const a = document.createElement('a');
@@ -689,17 +703,19 @@ export default function App() {
             // For variants on a single file, download a mini-zip
             const zip = new JSZip();
             file.processedOutputs.forEach(out => {
-                const extIndex = file.name.lastIndexOf('.');
-                const namePart = extIndex !== -1 ? file.name.substring(0, extIndex) : file.name;
-                const extPart = extIndex !== -1 ? file.name.substring(extIndex) : '';
-                const newName = `${namePart}${out.nameSuffix}${extPart}`;
+                const extIndex = safeFileName.lastIndexOf('.');
+                const namePart = extIndex !== -1 ? safeFileName.substring(0, extIndex) : safeFileName;
+                const extPart = extIndex !== -1 ? safeFileName.substring(extIndex) : '';
+
+                const safeSuffix = sanitizeFileName(out.nameSuffix || '');
+                const newName = `${namePart}${safeSuffix}${extPart}`;
                 zip.file(newName, out.blob);
             });
             const zipBlob = await zip.generateAsync({ type: 'blob' });
             const url = URL.createObjectURL(zipBlob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `variants-${file.name}.zip`;
+            a.download = `variants-${safeFileName}.zip`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
