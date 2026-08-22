@@ -22,7 +22,7 @@ import logoImg from './assets/logo.svg';
 import PrivacyPolicy from './PrivacyPolicy';
 import TermsOfService from './TermsOfService';
 import { initAnalytics, trackEvent, isReturningVisitor } from './analytics';
-import { decodeGif } from './core/gifEngine.js';
+import { decodeGif, applyRulesToImageData } from './core/gifEngine.js';
 
 // Validates a 7-char hex color string like #ff00aa
 const isValidHex = (hex) => /^#[0-9a-f]{6}$/i.test(hex);
