@@ -231,6 +231,7 @@ const encodeRecoloredGif = (originalFrames, sources, globalNewColor) => {
 // --- MAIN APP COMPONENT ---
 export default function App() {
     const [mode, setMode] = useState('gif'); // 'gif' | 'image'
+    const [activeNav, setActiveNav] = useState('editor');
     const [gifFiles, setGifFiles] = useState([]);
     const [imageFiles, setImageFiles] = useState([]);
     const [selectedGifId, setSelectedGifId] = useState(null);
@@ -715,10 +716,10 @@ export default function App() {
                             <span className="text-xl font-bold text-primary">RecolorFlow</span>
                         </div>
                         <nav className="hidden md:flex items-center gap-4 text-sm font-medium text-on-surface-variant">
-                            <a href="#" className="px-1 py-1 border-b-2 border-primary text-on-surface transition-colors">Editor</a>
-                            <a href="#guide" className="px-1 py-1 border-b-2 border-transparent hover:text-on-surface transition-colors">Guide</a>
-                            <a href="#faq" className="px-1 py-1 border-b-2 border-transparent hover:text-on-surface transition-colors">FAQ</a>
-                            <a href="#changelog" className="px-1 py-1 border-b-2 border-transparent hover:text-on-surface transition-colors">Changelog</a>
+                            <a href="#" onClick={() => setActiveNav('editor')} className={`px-1 py-1 border-b-2 transition-colors ${activeNav === 'editor' ? 'border-primary text-on-surface' : 'border-transparent hover:text-on-surface'}`}>Editor</a>
+                            <a href="#guide" onClick={() => setActiveNav('guide')} className={`px-1 py-1 border-b-2 transition-colors ${activeNav === 'guide' ? 'border-primary text-on-surface' : 'border-transparent hover:text-on-surface'}`}>Guide</a>
+                            <a href="#faq" onClick={() => setActiveNav('faq')} className={`px-1 py-1 border-b-2 transition-colors ${activeNav === 'faq' ? 'border-primary text-on-surface' : 'border-transparent hover:text-on-surface'}`}>FAQ</a>
+                            <a href="#changelog" onClick={() => setActiveNav('changelog')} className={`px-1 py-1 border-b-2 transition-colors ${activeNav === 'changelog' ? 'border-primary text-on-surface' : 'border-transparent hover:text-on-surface'}`}>Changelog</a>
                         </nav>
                     </div>
                     <div className="flex items-center gap-4">
