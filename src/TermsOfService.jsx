@@ -12,7 +12,7 @@ export default function TermsOfService() {
                 
                 <div className="space-y-6">
                     <p className="text-center mb-12 text-lg text-on-surface-variant max-w-2xl mx-auto">
-                        Welcome to RecolorFlow. By using our website and tools, you agree to comply with and be bound by the following terms and conditions of use.
+                        Welcome to RecolorFlow. By accessing our website and utilizing our tools, you agree to comply with and be bound by the following terms and conditions of use.
                     </p>
                     
                     <div className="space-y-3 bg-surface-container-low p-8 rounded-2xl border border-outline-variant hover:border-outline transition-colors">
@@ -21,7 +21,7 @@ export default function TermsOfService() {
                             Description of Service
                         </h3>
                         <p className="text-base leading-relaxed pl-12 text-on-surface-variant">
-                            RecolorFlow provides a web-based utility to bulk recolor digital assets, such as GIFs and images. All processing is performed locally within your web browser. We do not host, store, or distribute your processed files.
+                            RecolorFlow provides a web-based utility for the bulk recoloring of digital assets, such as GIFs and images. All processing is executed locally within your web browser. We do not host, store, or distribute your processed files.
                         </p>
                     </div>
 
@@ -31,7 +31,7 @@ export default function TermsOfService() {
                             User Responsibilities & Copyright
                         </h3>
                         <p className="text-base leading-relaxed pl-12 text-on-surface-variant">
-                            You are solely responsible for the images and GIFs you process using RecolorFlow. You agree that you have the necessary rights, licenses, or permissions to modify the files you upload into your browser. RecolorFlow is not responsible for any copyright infringement resulting from your use of the tool.
+                            You are solely responsible for the images and GIFs you process using RecolorFlow. You affirm that you possess the necessary rights, licenses, or permissions to modify the files you upload into your browser. RecolorFlow assumes no responsibility for any copyright infringement resulting from your use of the tool.
                         </p>
                     </div>
 
@@ -41,7 +41,7 @@ export default function TermsOfService() {
                             Prohibited Uses
                         </h3>
                         <p className="text-base leading-relaxed pl-12 text-on-surface-variant">
-                            You agree not to use RecolorFlow for any unlawful purpose or in any way that violates the rights of others. This includes using the tool to forge, falsify, or maliciously alter documents or images intended to deceive.
+                            You agree not to use RecolorFlow for any unlawful purpose or in any manner that violates the rights of others. This includes utilizing the tool to forge, falsify, or maliciously alter documents or images with the intent to deceive.
                         </p>
                     </div>
 
@@ -51,7 +51,7 @@ export default function TermsOfService() {
                             Disclaimer of Warranties
                         </h3>
                         <p className="text-base leading-relaxed pl-12 text-on-surface-variant">
-                            The service is provided on an <strong className="text-on-surface">"AS IS"</strong> and <strong className="text-on-surface">"AS AVAILABLE"</strong> basis. RecolorFlow makes no warranties, expressed or implied, regarding the accuracy, reliability, or availability of the tool. We do not guarantee that the service will be error-free or uninterrupted.
+                            The service is provided on an <strong className="text-on-surface">"AS IS"</strong> and <strong className="text-on-surface">"AS AVAILABLE"</strong> basis. RecolorFlow makes no warranties, expressed or implied, regarding the accuracy, reliability, or availability of the tool. We cannot guarantee that the service will be uninterrupted or entirely error-free.
                         </p>
                     </div>
 
@@ -61,7 +61,7 @@ export default function TermsOfService() {
                             Limitation of Liability
                         </h3>
                         <p className="text-base leading-relaxed pl-12 text-on-surface-variant">
-                            In no event shall RecolorFlow or its creators be liable for any indirect, incidental, special, or consequential damages arising out of or in connection with your use of the service. This includes any loss of data or work resulting from browser crashes during file processing.
+                            In no event shall RecolorFlow or its creators be held liable for any indirect, incidental, special, or consequential damages arising out of or in connection with your use of the service. This includes any loss of data or work resulting from browser crashes during file processing.
                         </p>
                     </div>
 
@@ -71,7 +71,7 @@ export default function TermsOfService() {
                             Changes to Terms
                         </h3>
                         <p className="text-base leading-relaxed pl-12 text-on-surface-variant">
-                            We reserve the right to modify these Terms of Service at any time. Any changes will be effective immediately upon posting to this page. Continued use of the tool constitutes your acceptance of the revised terms. For questions, please contact us at: <a href="mailto:terms@recolorflow.com" className="text-primary hover:underline font-medium">terms@recolorflow.com</a>.
+                            We reserve the right to modify these Terms of Service at any time. Any changes will become effective immediately upon posting to this page. Your continued use of the tool constitutes your acceptance of the revised terms. For questions, please contact us at: <a href="mailto:terms@recolorflow.com" className="text-primary hover:underline font-medium">terms@recolorflow.com</a>.
                         </p>
                     </div>
                 </div>

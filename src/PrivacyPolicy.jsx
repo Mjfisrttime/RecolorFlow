@@ -12,7 +12,7 @@ export default function PrivacyPolicy() {
                 
                 <div className="space-y-6">
                     <p className="text-center mb-12 text-lg text-on-surface-variant max-w-2xl mx-auto">
-                        RecolorFlow ("we", "us", or "our") respects your privacy. We built RecolorFlow to be a secure, privacy-first utility. This policy explains how we handle your data when you use our website.
+                        RecolorFlow ("we", "us", or "our") respects your privacy. We designed RecolorFlow as a secure, privacy-first utility. This policy explains how we handle your data when you use our website.
                     </p>
                     
                     <div className="space-y-3 bg-surface-container-low p-8 rounded-2xl border border-outline-variant hover:border-outline transition-colors">
@@ -21,7 +21,7 @@ export default function PrivacyPolicy() {
                             We Do Not Collect or Store Your Files
                         </h3>
                         <p className="text-base leading-relaxed pl-12 text-on-surface-variant">
-                            RecolorFlow operates entirely on your local device. When you upload a GIF or image to be recolored, all processing is done locally within your web browser. <strong className="text-primary font-medium">Your files are never uploaded to our servers, saved in any database, or viewed by us.</strong>
+                            RecolorFlow operates entirely on your local device. When you upload a GIF or image for recoloring, all processing occurs locally within your web browser. <strong className="text-primary font-medium">Your files are never uploaded to our servers, saved in any database, or viewed by us.</strong>
                         </p>
                     </div>
 
@@ -31,7 +31,7 @@ export default function PrivacyPolicy() {
                             We Do Not Collect Personal Information
                         </h3>
                         <p className="text-base leading-relaxed pl-12 text-on-surface-variant">
-                            We do not require you to create an account, nor do we ask for your name, email address, or any other personal information to use RecolorFlow.
+                            You are not required to create an account, nor do we request your name, email address, or any other personal information to use RecolorFlow.
                         </p>
                     </div>
 
@@ -51,7 +51,7 @@ export default function PrivacyPolicy() {
                             Third-Party Data Sharing
                         </h3>
                         <p className="text-base leading-relaxed pl-12 text-on-surface-variant">
-                            Because we do not collect any personal data or files, we have no data to sell, trade, or share with third-party companies, advertisers, or affiliates.
+                            Because we collect neither personal data nor files, we have no information to sell, trade, or share with third parties, advertisers, or affiliates.
                         </p>
                     </div>
 
