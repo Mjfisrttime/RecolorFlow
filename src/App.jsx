@@ -1399,8 +1399,46 @@ export default function App() {
                             </div>
                         </div>
 
+                        {/* CHANGELOG SECTION */}
+                        <section id="changelog" className="mt-24 pt-24 border-t border-outline-variant">
+                            <div className="text-center mb-12">
+                                <h2 className="text-3xl font-bold text-on-surface mb-3">Changelog & Version History</h2>
+                                <p className="text-on-surface-variant">Track the latest updates and improvements to RecolorFlow.</p>
+                            </div>
+                            
+                            <div className="max-w-3xl mx-auto space-y-8">
+                                {/* Version 2.0.0 */}
+                                <div className="relative pl-8 border-l-2 border-outline-variant/30">
+                                    <div className="absolute w-4 h-4 bg-primary rounded-full -left-[9px] top-1 ring-4 ring-surface"></div>
+                                    <h3 className="text-xl font-bold text-on-surface mb-1">v2.0.0 - Material Design Update</h3>
+                                    <time className="text-xs font-mono text-primary mb-4 block">August 2026</time>
+                                    <div className="space-y-2 text-sm text-on-surface-variant bg-surface-container-low p-5 rounded-xl border border-outline-variant">
+                                        <ul className="list-disc list-outside ml-4 space-y-2">
+                                            <li><strong className="text-on-surface">Redesigned UI:</strong> Complete overhaul using Material Design 3 tokens and the Geist font family for a sleeker, more professional look.</li>
+                                            <li><strong className="text-on-surface">Navigation:</strong> Added functional sticky header navigation that dynamically highlights your current section.</li>
+                                            <li><strong className="text-on-surface">Cross-Promotion:</strong> Integrated a trust badge linking to our WebP Bulk Converter utility.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                {/* Version 1.1.0 */}
+                                <div className="relative pl-8 border-l-2 border-outline-variant/30">
+                                    <div className="absolute w-3 h-3 bg-surface-container-highest rounded-full -left-[7px] top-1.5 ring-4 ring-surface border border-outline-variant"></div>
+                                    <h3 className="text-lg font-bold text-on-surface mb-1">v1.1.0 - Performance & Security</h3>
+                                    <time className="text-xs font-mono text-outline mb-4 block">August 2026</time>
+                                    <div className="space-y-2 text-sm text-on-surface-variant bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/50">
+                                        <ul className="list-disc list-outside ml-4 space-y-2">
+                                            <li><strong className="text-on-surface">Faster Processing:</strong> Switched to highly optimized squared Euclidean distance math for color mapping hot loops.</li>
+                                            <li><strong className="text-on-surface">Security Patches:</strong> Resolved vulnerabilities related to reverse tabnabbing and insecure random number generation.</li>
+                                            <li><strong className="text-on-surface">Reliability:</strong> Added comprehensive Vitest test coverage for core color transformation logic.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
                         {/* USE CASES & TRUST */}
-                        <div className="mt-16 text-center">
+                        <div className="mt-24 text-center">
                             <h3 className="text-sm font-bold text-outline uppercase tracking-wider mb-6">Best For</h3>
                             <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-sm text-on-surface-variant">
                                 <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary"/> Game Assets</span>
