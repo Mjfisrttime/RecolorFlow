@@ -130,8 +130,10 @@ export default function App() {
 
     // Reset file statuses when color rules change so re-processing works
     const resetFilesToIdle = useCallback(() => {
-        setFiles(prev => prev.map(f => f.status === 'done' || f.status === 'error' ? { ...f, status: 'idle', processedBlob: undefined, processedOutputs: undefined } : f));
-    }, [setFiles]);
+        const resetFn = prev => prev.map(f => f.status === 'done' || f.status === 'error' ? { ...f, status: 'idle', processedBlob: undefined, processedOutputs: undefined } : f);
+        setGifFiles(resetFn);
+        setImageFiles(resetFn);
+    }, []);
 
     useEffect(() => {
         resetFilesToIdle();
