@@ -715,10 +715,10 @@ export default function App() {
                             <span className="text-xl font-bold text-primary">RecolorFlow</span>
                         </div>
                         <nav className="hidden md:flex items-center gap-4 text-sm font-medium text-on-surface-variant">
-                            <button className="px-1 py-1 border-b-2 border-primary text-on-surface transition-colors">Editor</button>
-                            <button className="px-1 py-1 border-b-2 border-transparent hover:text-on-surface transition-colors">Guide</button>
-                            <button className="px-1 py-1 border-b-2 border-transparent hover:text-on-surface transition-colors">FAQ</button>
-                            <button className="px-1 py-1 border-b-2 border-transparent hover:text-on-surface transition-colors">Changelog</button>
+                            <a href="#" className="px-1 py-1 border-b-2 border-primary text-on-surface transition-colors">Editor</a>
+                            <a href="#guide" className="px-1 py-1 border-b-2 border-transparent hover:text-on-surface transition-colors">Guide</a>
+                            <a href="#faq" className="px-1 py-1 border-b-2 border-transparent hover:text-on-surface transition-colors">FAQ</a>
+                            <a href="#changelog" className="px-1 py-1 border-b-2 border-transparent hover:text-on-surface transition-colors">Changelog</a>
                         </nav>
                     </div>
                     <div className="flex items-center gap-4">
@@ -1301,7 +1301,7 @@ export default function App() {
                 <div className="max-w-[1100px] mx-auto px-6 py-16 lg:py-24 space-y-24">
                     
                     {/* FAQ SECTION */}
-                    <section>
+                    <section id="faq">
                         <div className="text-center mb-12">
                             <h2 className="text-3xl font-bold text-on-surface mb-3">Frequently Asked Questions</h2>
                             <p className="text-on-surface-variant">Everything you need to know about recoloring your assets.</p>
@@ -1354,7 +1354,7 @@ export default function App() {
                     </section>
 
                     {/* GUIDE SECTION */}
-                    <section>
+                    <section id="guide">
                         <div className="text-center mb-12">
                             <h2 className="text-3xl font-bold text-on-surface mb-3">Detailed Guide</h2>
                             <p className="text-on-surface-variant">Master the recoloring workflow.</p>
