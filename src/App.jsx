@@ -821,16 +821,21 @@ export default function App() {
                                                 {file.status === 'idle' && <span className="text-xs text-on-surface-variant">Ready</span>}
                                                 {file.status === 'processing' && <><Loader2 className="w-3 h-3 animate-spin text-primary" /><span className="text-xs text-primary">Processing...</span></>}
                                                 {file.status === 'done' && <><CheckCircle2 className="w-3 h-3 text-success" /><span className="text-xs text-success">Done</span></>}
-                                                {file.status === 'error' && <><AlertCircle className="w-3 h-3 text-error" /><span className="text-xs text-error">Failed</span></>}
+                                                {file.status === 'error' && (
+                                                    <div title={file.error || "Unknown error occurred"} className="flex items-center gap-1 cursor-help">
+                                                        <AlertCircle className="w-3 h-3 text-error" />
+                                                        <span className="text-xs text-error border-b border-dotted border-error/50">Failed</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="flex items-center">
                                             {file.status === 'done' && (
-                                                <button aria-label={`Download ${file.name}`} onClick={(e) => { e.stopPropagation(); downloadSingle(file); }} className="p-1.5 text-primary hover:text-primary/80 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary" title="Download">
+                                                <button aria-label={`Download ${file.name}`} onClick={(e) => { e.stopPropagation(); downloadSingle(file); }} className="p-2 text-primary hover:text-primary/80 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary" title="Download">
                                                     <Download className="w-4 h-4" />
                                                 </button>
                                             )}
-                                            <button aria-label={`Remove ${file.name}`} onClick={(e) => { e.stopPropagation(); removeFile(file.id); }} className="p-1.5 text-outline hover:text-error rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-error" title="Remove">
+                                            <button aria-label={`Remove ${file.name}`} onClick={(e) => { e.stopPropagation(); removeFile(file.id); }} className="p-2 text-outline hover:text-error rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-error" title="Remove">
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
                                         </div>
@@ -1051,7 +1056,7 @@ export default function App() {
                                                         const newM = multiMappings.filter(m => m.id !== mapping.id);
                                                         setMultiMappings(newM);
                                                         if (activeSourceId === mapping.id && newM.length > 0) setActiveSourceId(newM[0].id);
-                                                    }} className="text-outline hover:text-error focus:outline-none focus-visible:ring-2 focus-visible:ring-error rounded">
+                                                    }} className="p-2 -m-2 text-outline hover:text-error focus:outline-none focus-visible:ring-2 focus-visible:ring-error rounded">
                                                         <Trash2 className="w-4 h-4"/>
                                                     </button>
                                                 </div>
@@ -1116,7 +1121,7 @@ export default function App() {
                                                     const newV = variants.filter(v => v.id !== variant.id);
                                                     setVariants(newV);
                                                     if (selectedVariantId === variant.id && newV.length > 0) setSelectedVariantId(newV[0].id);
-                                                }} className="text-outline hover:text-error focus:outline-none focus-visible:ring-2 focus-visible:ring-error rounded">
+                                                }} className="p-2 -m-2 text-outline hover:text-error focus:outline-none focus-visible:ring-2 focus-visible:ring-error rounded">
                                                     <Trash2 className="w-4 h-4"/>
                                                 </button>
                                             </div>
@@ -1133,7 +1138,7 @@ export default function App() {
                                                             <button aria-label={`Delete Rule ${rIdx + 1} from Variant ${vIdx + 1}`} onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 setVariants(variants.map(v => v.id === variant.id ? {...v, rules: v.rules.filter(r => r.id !== rule.id)} : v));
-                                                            }} className="text-outline hover:text-error focus:outline-none focus-visible:ring-2 focus-visible:ring-error rounded"><Trash2 className="w-3 h-3"/></button>
+                                                            }} className="p-2 -m-2 text-outline hover:text-error focus:outline-none focus-visible:ring-2 focus-visible:ring-error rounded"><Trash2 className="w-4 h-4"/></button>
                                                         </div>
                                                         <div className="flex items-center gap-2 mb-2">
                                                             <input type="color" value={safeHex(rule.target)} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, rules: v.rules.map(r => r.id === rule.id ? {...r, target: e.target.value} : r)} : v))} className="w-6 h-6 rounded p-0 border-0 bg-transparent shrink-0 cursor-pointer"/>
