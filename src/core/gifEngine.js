@@ -184,6 +184,11 @@ export const encodeRecoloredGif = (originalFrames, rules) => {
         const transIndex = palette.length - 1;
 
         const index = applyPalette(rgbaPixels, palette);
+        for (let i = 0, j = 0; i < rgbaPixels.length; i += 4, j++) {
+            if (rgbaPixels[i] === keyColor[0] && rgbaPixels[i+1] === keyColor[1] && rgbaPixels[i+2] === keyColor[2]) {
+                index[j] = transIndex;
+            }
+        }
 
         gif.writeFrame(index, width, height, {
             palette,

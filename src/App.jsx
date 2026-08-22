@@ -159,7 +159,7 @@ export default function App() {
 
     // --- FILE HANDLING ---
     const handleFileUpload = (e) => {
-        const uploadedFiles = Array.from(e.target.files);
+        const uploadedFiles = Array.from(e.target.files || (e.dataTransfer && e.dataTransfer.files) || []);
         const validTypes = mode === 'gif' 
             ? ['image/gif'] 
             : ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/bmp', 'image/gif'];
@@ -526,7 +526,7 @@ export default function App() {
                     {/* LEFT PANEL: File List */}
                     <div className="lg:col-span-3 border border-outline-variant rounded-lg bg-surface-container-low flex flex-col h-[500px] lg:h-full shrink-0 overflow-hidden">
                         <div className="p-4 border-b border-outline-variant bg-surface-container">
-                            <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-outline-variant hover:border-primary hover:bg-surface-container-high transition-colors rounded-xl cursor-pointer focus-within:ring-2 focus-within:ring-primary focus-within:border-primary" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.target.querySelector('input').click(); }}>
+                            <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-outline-variant hover:border-primary hover:bg-surface-container-high transition-colors rounded-xl cursor-pointer focus-within:ring-2 focus-within:ring-primary focus-within:border-primary" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.target.querySelector('input').click(); }} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); handleFileUpload(e); }}>
                                 <Upload className="w-6 h-6 text-on-surface-variant mb-2" />
                                 <span className="text-sm text-on-surface-variant font-medium">
                                     {mode === 'gif' ? 'Upload GIFs' : 'Upload Icons / Images'}

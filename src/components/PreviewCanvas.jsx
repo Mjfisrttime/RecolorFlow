@@ -12,10 +12,12 @@ export default function PreviewCanvas({ file, mode, rules, isPlaying, onColorPic
     const animationRef = useRef(null);
     const previewFrameIdxRef = useRef(0);
     const rulesRef = useRef(rules);
+    const recoloredCacheRef = useRef(new Map());
 
     // Keep rules ref updated without triggering re-renders
     useEffect(() => {
         rulesRef.current = rules;
+        recoloredCacheRef.current.clear();
     }, [rules]);
 
     useEffect(() => {
@@ -80,8 +82,6 @@ export default function PreviewCanvas({ file, mode, rules, isPlaying, onColorPic
 
         let lastDrawTime = performance.now();
         let isFirstDraw = true;
-        const recoloredCache = new Map();
-
         const drawFrame = (time) => {
             try {
                 if (previewFrameIdxRef.current >= previewFrames.length) {
@@ -104,10 +104,10 @@ export default function PreviewCanvas({ file, mode, rules, isPlaying, onColorPic
                         
                         const currentRules = rulesRef.current || [];
                         if (currentRules.every(r => isValidHex(r.srcHex) && isValidHex(r.tgtHex))) {
-                            let recoloredData = recoloredCache.get(previewFrameIdxRef.current);
+                            let recoloredData = recoloredCacheRef.current.get(previewFrameIdxRef.current);
                             if (!recoloredData) {
                                 recoloredData = applyRulesToImageData(frame.imageData, currentRules);
-                                recoloredCache.set(previewFrameIdxRef.current, recoloredData);
+                                recoloredCacheRef.current.set(previewFrameIdxRef.current, recoloredData);
                             }
                             rCtx.putImageData(recoloredData, 0, 0);
                         } else {
