@@ -27,18 +27,26 @@ const getUnusedColor = (imageData) => {
     for (let i = 0; i < data.length; i += 4) {
         if (data[i + 3] > 128) {
             used.add((data[i] << 16) | (data[i + 1] << 8) | data[i + 2]);
-
         }
     }
+    
+    // Fast sparse search (checks ~2,197 colors)
     for (let r = 0; r < 256; r += 21) {
         for (let g = 0; g < 256; g += 21) {
             for (let b = 0; b < 256; b += 21) {
                 if (!used.has((r << 16) | (g << 8) | b)) return [r, g, b];
-
             }
         }
     }
-    return [255, 0, 255];
+    
+    // Exhaustive fallback (guaranteed to find an unused color if image < 16.7M unique colors)
+    for (let i = 0; i < 16777216; i++) {
+        if (!used.has(i)) {
+            return [(i >> 16) & 255, (i >> 8) & 255, i & 255];
+        }
+    }
+    
+    return [255, 0, 255]; // Absolute fallback (should mathematically never be reached for standard sizes)
 };
 
 const decodeGifInWorker = (arrayBuffer) => {
