@@ -18,7 +18,7 @@ import {
 import { parseGIF, decompressFrames } from 'gifuct-js';
 import { GIFEncoder, quantize, applyPalette } from 'gifenc';
 import JSZip from 'jszip';
-import logoImg from './assets/logo.png';
+import logoImg from './assets/logo.svg';
 
 // Validates a 7-char hex color string like #ff00aa
 const isValidHex = (hex) => /^#[0-9a-f]{6}$/i.test(hex);
