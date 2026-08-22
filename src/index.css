@@ -1,6 +1,93 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
+@theme {
+  --color-surface: #10131a;
+  --color-surface-dim: #10131a;
+  --color-surface-bright: #363941;
+  --color-surface-container-lowest: #0b0e15;
+  --color-surface-container-low: #191b23;
+  --color-surface-container: #1d2027;
+  --color-surface-container-high: #272a31;
+  --color-surface-container-highest: #32353c;
+  --color-on-surface: #e1e2ec;
+  --color-on-surface-variant: #c2c6d6;
+  --color-on-background: #e1e2ec;
+  --color-background: #10131a;
+  --color-primary: #adc6ff;
+  --color-primary-container: #4d8eff;
+  --color-on-primary: #002e6a;
+  --color-on-primary-container: #00285d;
+  --color-secondary: #b9c8de;
+  --color-secondary-container: #39485a;
+  --color-on-secondary: #233143;
+  --color-on-secondary-container: #a7b6cc;
+  --color-tertiary: #ffb786;
+  --color-tertiary-container: #df7412;
+  --color-on-tertiary: #502400;
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+  --color-on-error: #690005;
+  --color-on-error-container: #ffdad6;
+  --color-outline: #8c909f;
+  --color-outline-variant: #424754;
+  --color-inverse-surface: #e1e2ec;
+  --color-inverse-on-surface: #2e3038;
+  --color-inverse-primary: #005ac2;
+  --color-surface-tint: #adc6ff;
+  --color-action-blue: #3B82F6;
+  --color-success: #4ade80;
+  --color-success-dim: #166534;
+}
+
 body {
+  font-family: 'Geist', sans-serif;
   margin: 0;
   padding: 0;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #10131a; }
+::-webkit-scrollbar-thumb { background: #32353c; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #424754; }
+
+/* Range Slider Styling */
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  background: transparent;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 14px;
+  width: 14px;
+  border-radius: 50%;
+  background: var(--color-primary, #adc6ff);
+  cursor: pointer;
+  margin-top: -6px;
+  box-shadow: 0 0 0 2px #10131a;
+}
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 2px;
+  cursor: pointer;
+  background: #424754;
+  border-radius: 1px;
+}
+input[type=range]:focus { outline: none; }
+input[type=range]::-moz-range-thumb {
+  height: 14px;
+  width: 14px;
+  border-radius: 50%;
+  background: var(--color-primary, #adc6ff);
+  cursor: pointer;
+  border: 2px solid #10131a;
+}
+input[type=range]::-moz-range-track {
+  width: 100%;
+  height: 2px;
+  cursor: pointer;
+  background: #424754;
+  border-radius: 1px;
 }
