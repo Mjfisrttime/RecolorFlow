@@ -13,12 +13,16 @@ import {
     ChevronDown,
     ChevronUp,
     ExternalLink,
-    Zap
+    Zap,
+    Moon,
+    Sun
 } from 'lucide-react';
-import { parseGIF, decompressFrames } from 'gifuct-js';
-import { GIFEncoder, quantize, applyPalette } from 'gifenc';
 import JSZip from 'jszip';
 import logoImg from './assets/logo.svg';
+import PrivacyPolicy from './PrivacyPolicy';
+import TermsOfService from './TermsOfService';
+import { initAnalytics, trackEvent, isReturningVisitor } from './analytics';
+import { decodeGif } from './core/gifEngine.js';
 
 // Validates a 7-char hex color string like #ff00aa
 const isValidHex = (hex) => /^#[0-9a-f]{6}$/i.test(hex);
@@ -26,213 +30,64 @@ const isValidHex = (hex) => /^#[0-9a-f]{6}$/i.test(hex);
 // Safely get a value for <input type="color"> — must be valid 7-char hex
 const safeHex = (hex) => isValidHex(hex) ? hex : '#000000';
 
-// --- UTILITIES ---
-const hexToRgb = (hex) => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16)
-    } : { r: 0, g: 0, b: 0 };
-};
-
-// --- COLOR DISTANCE (TOLERANCE) ---
-// Performance optimization: Avoid Math.sqrt and Math.pow in hot loops
-const rgbDistanceSq = (r1, g1, b1, r2, g2, b2) => {
-    const dr = r1 - r2;
-    const dg = g1 - g2;
-    const db = b1 - b2;
-    return dr * dr + dg * dg + db * db;
-};
-
-const MAX_COLOR_DIST = Math.sqrt(3 * Math.pow(255, 2)); // ~441.67
-
-const checkerStyle = {
-    backgroundImage: 'repeating-linear-gradient(45deg, #1f2937 25%, transparent 25%, transparent 75%, #1f2937 75%, #1f2937), repeating-linear-gradient(45deg, #1f2937 25%, #111827 25%, #111827 75%, #1f2937 75%, #1f2937)',
-    backgroundPosition: '0 0, 10px 10px',
-    backgroundSize: '20px 20px'
-};
-
-// Find a color that isn't used in the image to use as a transparency key
-const getUnusedColor = (imageData) => {
-    const used = new Set();
-    const data = imageData.data;
-    for (let i = 0; i < data.length; i += 4) {
-        if (data[i + 3] > 128) {
-            used.add((data[i] << 16) | (data[i + 1] << 8) | data[i + 2]);
-        }
-    }
-    for (let r = 0; r < 256; r += 21) {
-        for (let g = 0; g < 256; g += 21) {
-            for (let b = 0; b < 256; b += 21) {
-                if (!used.has((r << 16) | (g << 8) | b)) return [r, g, b];
-            }
-        }
-    }
-    return [255, 0, 255]; // Fallback magenta
-};
-
-// --- GIF PROCESSING ENGINE ---
-const decodeGif = async (arrayBuffer) => {
-    // Fix 1: Ensure the ArrayBuffer is cast to a typed Uint8Array 
-    // to prevent 'data.subarray is not a function' errors in the GIF parser.
-    const gif = parseGIF(new Uint8Array(arrayBuffer));
-    const rawFrames = decompressFrames(gif, true);
-    const frames = [];
-
-    const canvas = document.createElement('canvas');
-    canvas.width = gif.lsd.width;
-    canvas.height = gif.lsd.height;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = canvas.width;
-    tempCanvas.height = canvas.height;
-    const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
-
-    for (let i = 0; i < rawFrames.length; i++) {
-        const frame = rawFrames[i];
-
-        // Save state for next frame's disposal (method 3)
-        if (frame.disposalType === 3) {
-            tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
-            tempCtx.drawImage(canvas, 0, 0);
-        }
-
-        // Fix 2: Draw current frame patch with a guard for 0-dimension 
-        // or mismatched data lengths that would cause an IndexSizeError crash.
-        if (frame.dims.width > 0 && frame.dims.height > 0) {
-            const expectedLength = frame.dims.width * frame.dims.height * 4;
-            let patchArray = new Uint8ClampedArray(frame.patch);
-
-            // Guard against malformed GIF frame lengths
-            if (patchArray.length !== expectedLength) {
-                const fixed = new Uint8ClampedArray(expectedLength);
-                fixed.set(patchArray.subarray(0, Math.min(patchArray.length, expectedLength)));
-                patchArray = fixed;
-            }
-
-            const patchData = new ImageData(
-                patchArray,
-                frame.dims.width,
-                frame.dims.height
-            );
-            const patchCanvas = document.createElement('canvas');
-            patchCanvas.width = frame.dims.width;
-            patchCanvas.height = frame.dims.height;
-            patchCanvas.getContext('2d').putImageData(patchData, 0, 0);
-            ctx.drawImage(patchCanvas, frame.dims.left, frame.dims.top);
-        }
-
-        // Extract full frame data
-        frames.push({
-            imageData: ctx.getImageData(0, 0, canvas.width, canvas.height),
-            delay: Math.max(frame.delay, 20), // Normalize 0-delay to standard 20ms
-            width: canvas.width,
-            height: canvas.height
-        });
-
-        // Apply disposal for NEXT frame
-        if (frame.disposalType === 2) {
-            ctx.clearRect(frame.dims.left, frame.dims.top, frame.dims.width, frame.dims.height);
-        } else if (frame.disposalType === 3) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(tempCanvas, 0, 0);
-        }
-    }
-    return frames;
-};
-
-const applyRulesToImageData = (imageData, rules) => {
-    const data = new Uint8ClampedArray(imageData.data);
-    const width = imageData.width;
-    const height = imageData.height;
-
-    const parsedRules = rules.map(r => {
-        const tolDist = (r.tol / 100) * MAX_COLOR_DIST;
-        return {
-            src: hexToRgb(r.srcHex),
-            tgt: hexToRgb(r.tgtHex),
-            tolSq: tolDist * tolDist // Store squared tolerance for faster comparison
-
-        };
-    });
-
-    for (let i = 0; i < data.length; i += 4) {
-        if (data[i + 3] === 0) continue;
-
-        const r = data[i], g = data[i + 1], b = data[i + 2];
-
-        for (let j = 0; j < parsedRules.length; j++) {
-            const rule = parsedRules[j];
-            const dr = r - rule.src.r;
-            const dg = g - rule.src.g;
-            const db = b - rule.src.b;
-            if ((dr * dr + dg * dg + db * db) <= rule.tolSq) {
-                data[i] = rule.tgt.r;
-                data[i + 1] = rule.tgt.g;
-                data[i + 2] = rule.tgt.b;
-                break;
-            }
-        }
-    }
-    return new ImageData(data, width, height);
-};
-
-const encodeRecoloredGif = (originalFrames, sources, globalNewColor) => {
-    if (originalFrames.length === 0) return null;
-
-    const width = originalFrames[0].width;
-    const height = originalFrames[0].height;
-    const gif = GIFEncoder(); // Note: gifenc exports a factory function
-
-    for (const frame of originalFrames) {
-        const recolored = applySourcesToImageData(frame.imageData, sources, globalNewColor);
-
-        // Transparency handling via Key Color
-        const keyColor = getUnusedColor(recolored);
-        const rgbaPixels = new Uint8Array(width * height * 4);
-        const data = recolored.data;
-
-        for (let i = 0; i < data.length; i += 4) {
-            if (data[i + 3] < 128) { // If transparent, use key color
-                rgbaPixels[i] = keyColor[0];
-                rgbaPixels[i + 1] = keyColor[1];
-                rgbaPixels[i + 2] = keyColor[2];
-                rgbaPixels[i + 3] = 255;
-            } else {
-                rgbaPixels[i] = data[i];
-                rgbaPixels[i + 1] = data[i + 1];
-                rgbaPixels[i + 2] = data[i + 2];
-                rgbaPixels[i + 3] = data[i + 3];
-            }
-        }
-
-        // gifenc expects 4-channel RGBA data for quantize and applyPalette
-        const palette = quantize(rgbaPixels, 255);
-        // Force keyColor into palette to avoid it getting averaged out
-        palette.push(keyColor);
-        const transIndex = palette.length - 1;
-
-        const index = applyPalette(rgbaPixels, palette);
-
-        gif.writeFrame(index, width, height, {
-            palette,
-            delay: frame.delay,
-            transparent: true,
-            transparentIndex: transIndex
-        });
-    }
-
-    gif.finish();
-    return gif.bytes();
-};
-
-
 // --- MAIN APP COMPONENT ---
 export default function App() {
+    const [isLight, setIsLight] = React.useState(false);
+
+    React.useEffect(() => {
+        if (isLight) {
+            document.documentElement.classList.add('light');
+        } else {
+            document.documentElement.classList.remove('light');
+        }
+    }, [isLight]);
+
+    const [currentPage, setCurrentPage] = useState('app'); // 'app' | 'privacy'
     const [mode, setMode] = useState('gif'); // 'gif' | 'image'
+
+    React.useEffect(() => {
+        initAnalytics();
+        trackEvent('page_view', { 
+            page_name: currentPage,
+            is_returning_visitor: isReturningVisitor()
+        });
+    }, [currentPage]);
+
+    React.useEffect(() => {
+        trackEvent('mode_switched', { mode });
+    }, [mode]);
+
     const [activeNav, setActiveNav] = useState('editor');
+
+    const handleNavClick = (e, sectionId) => {
+        if (e) e.preventDefault();
+        setActiveNav(sectionId);
+        
+        // Sync URL dynamically without jumping
+        if (sectionId === 'editor') {
+            window.history.pushState(null, '', window.location.pathname);
+        } else {
+            window.history.pushState(null, '', `#${sectionId}`);
+        }
+
+        if (currentPage !== 'app') {
+            setCurrentPage('app');
+            setTimeout(() => {
+                if (sectionId === 'editor') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 50);
+        } else {
+            if (sectionId === 'editor') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    };
+
     const [gifFiles, setGifFiles] = useState([]);
     const [imageFiles, setImageFiles] = useState([]);
     const [selectedGifId, setSelectedGifId] = useState(null);
@@ -335,6 +190,10 @@ export default function App() {
             : ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/bmp', 'image/gif'];
         
         const filteredFiles = uploadedFiles.filter(f => validTypes.includes(f.type) || validTypes.some(t => f.name.toLowerCase().endsWith('.' + t.split('/')[1])));
+        
+        if (filteredFiles.length > 0) {
+            trackEvent('file_uploaded', { mode, file_count: filteredFiles.length });
+        }
         
         const newFiles = filteredFiles.map(file => ({
             id: crypto.randomUUID(),
@@ -501,6 +360,13 @@ export default function App() {
             setIsProcessing(false);
             return;
         }
+
+        const startProcessingTime = Date.now();
+        trackEvent('tool_start', { 
+            mode, 
+            output_mode: outputMode,
+            file_count: pendingFiles.length 
+        });
         
         const jobs = (() => {
             if (outputMode === 'single') {
@@ -629,6 +495,12 @@ export default function App() {
                 }
             }
         }
+        const processDuration = Date.now() - startProcessingTime;
+        trackEvent('tool_completion', { 
+            mode, 
+            file_count: pendingFiles.length,
+            duration_ms: processDuration
+        });
         setIsProcessing(false);
     };
 
@@ -655,6 +527,8 @@ export default function App() {
         });
 
         if (count === 0) return alert("No successfully processed files to download.");
+        
+        trackEvent('button_interaction', { button_name: 'download_zip', file_count: count });
 
         const zipBlob = await zip.generateAsync({ type: 'blob' });
         const url = URL.createObjectURL(zipBlob);
@@ -670,6 +544,8 @@ export default function App() {
     const downloadSingle = async (file) => {
         if (!file.processedOutputs || file.processedOutputs.length === 0) return;
         
+        trackEvent('button_interaction', { button_name: 'download_single', file_type: mode });
+
         if (file.processedOutputs.length === 1) {
             const out = file.processedOutputs[0];
             const extIndex = file.name.lastIndexOf('.');
@@ -718,18 +594,28 @@ export default function App() {
             <header className="sticky top-0 z-50 border-b border-outline-variant bg-surface shrink-0">
                 <div className="max-w-[1440px] mx-auto px-6 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-6">
-                        <div className="flex items-center gap-2">
+                        <div 
+                            className="flex items-center gap-2 cursor-pointer"
+                            onClick={(e) => handleNavClick(e, 'editor')}
+                        >
                             <img src={logoImg} alt="RecolorFlow Logo" className="w-8 h-8 rounded" />
                             <span className="text-xl font-bold text-primary">RecolorFlow</span>
                         </div>
                         <nav className="hidden md:flex items-center gap-4 text-sm font-medium text-on-surface-variant">
-                            <a href="#" onClick={() => setActiveNav('editor')} className={`px-1 py-1 border-b-2 transition-colors ${activeNav === 'editor' ? 'border-primary text-on-surface' : 'border-transparent hover:text-on-surface'}`}>Editor</a>
-                            <a href="#guide" onClick={() => setActiveNav('guide')} className={`px-1 py-1 border-b-2 transition-colors ${activeNav === 'guide' ? 'border-primary text-on-surface' : 'border-transparent hover:text-on-surface'}`}>Guide</a>
-                            <a href="#faq" onClick={() => setActiveNav('faq')} className={`px-1 py-1 border-b-2 transition-colors ${activeNav === 'faq' ? 'border-primary text-on-surface' : 'border-transparent hover:text-on-surface'}`}>FAQ</a>
-                            <a href="#changelog" onClick={() => setActiveNav('changelog')} className={`px-1 py-1 border-b-2 transition-colors ${activeNav === 'changelog' ? 'border-primary text-on-surface' : 'border-transparent hover:text-on-surface'}`}>Changelog</a>
+                            <a href="#" onClick={(e) => handleNavClick(e, 'editor')} className={`px-1 py-1 border-b-2 transition-colors ${currentPage === 'app' && activeNav === 'editor' ? 'border-primary text-on-surface' : 'border-transparent hover:text-on-surface'}`}>Editor</a>
+                            <a href="#guide" onClick={(e) => handleNavClick(e, 'guide')} className={`px-1 py-1 border-b-2 transition-colors ${currentPage === 'app' && activeNav === 'guide' ? 'border-primary text-on-surface' : 'border-transparent hover:text-on-surface'}`}>Guide</a>
+                            <a href="#faq" onClick={(e) => handleNavClick(e, 'faq')} className={`px-1 py-1 border-b-2 transition-colors ${currentPage === 'app' && activeNav === 'faq' ? 'border-primary text-on-surface' : 'border-transparent hover:text-on-surface'}`}>FAQ</a>
+                            <a href="#changelog" onClick={(e) => handleNavClick(e, 'changelog')} className={`px-1 py-1 border-b-2 transition-colors ${currentPage === 'app' && activeNav === 'changelog' ? 'border-primary text-on-surface' : 'border-transparent hover:text-on-surface'}`}>Changelog</a>
                         </nav>
                     </div>
                     <div className="flex items-center gap-4">
+                        <button 
+                            onClick={() => setIsLight(!isLight)}
+                            className="p-2 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"
+                            aria-label="Toggle theme"
+                        >
+                            {isLight ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+                        </button>
                         <div className="flex items-center bg-surface-container-low border border-outline-variant rounded-full p-1">
                             <button 
                                 onClick={() => setMode('gif')}
@@ -764,6 +650,8 @@ export default function App() {
                 </div>
             </header>
 
+            {currentPage === 'app' && (
+            <>
             {/* APP HEADER SECTION (below navbar) */}
             <div className="border-b border-outline-variant bg-surface shrink-0">
                 <div className="max-w-[1440px] mx-auto px-6 py-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1488,6 +1376,16 @@ export default function App() {
                     </section>
                 </div>
             </div>
+            </>
+            )}
+            
+            {currentPage === 'privacy' && (
+                <PrivacyPolicy onBack={() => { setCurrentPage('app'); window.scrollTo(0, 0); }} />
+            )}
+
+            {currentPage === 'terms' && (
+                <TermsOfService onBack={() => { setCurrentPage('app'); window.scrollTo(0, 0); }} />
+            )}
             
             {/* FOOTER */}
             <footer className="border-t border-outline-variant bg-surface-container-lowest py-8 text-center">
@@ -1496,8 +1394,8 @@ export default function App() {
                         <img src={logoImg} alt="RecolorFlow Logo" className="w-5 h-5 rounded" /> RecolorFlow
                     </div>
                     <div className="flex items-center gap-4 text-sm text-on-surface-variant mt-2">
-                        <a href="#" className="hover:text-on-surface">Privacy Policy</a>
-                        <a href="#" className="hover:text-on-surface">Terms of Service</a>
+                        <a href="#privacy" onClick={(e) => { e.preventDefault(); setCurrentPage('privacy'); window.history.pushState(null, '', '#privacy'); window.scrollTo(0, 0); }} className="hover:text-on-surface">Privacy Policy</a>
+                        <a href="#terms" onClick={(e) => { e.preventDefault(); setCurrentPage('terms'); window.history.pushState(null, '', '#terms'); window.scrollTo(0, 0); }} className="hover:text-on-surface">Terms of Service</a>
                         <a href="#" className="hover:text-on-surface">Github</a>
                         <a href="#" className="hover:text-on-surface">Support</a>
                     </div>

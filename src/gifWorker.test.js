@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { hexToRgb, rgbDistanceSq } from './gifWorker.js';
+import { hexToRgb, rgbDistanceSq } from './core/gifEngine.js';
 
 describe('gifWorker utilities', () => {
     describe('hexToRgb', () => {
