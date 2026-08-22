@@ -768,7 +768,7 @@ export default function App() {
                                                     <label className="text-[10px] text-on-surface-variant block mb-1 uppercase tracking-wider">Target</label>
                                                     <div className="flex items-center gap-2 bg-surface-container-lowest p-1.5 rounded border border-outline-variant">
                                                         <input type="color" value={safeHex(mapping.target)} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, target: e.target.value} : m))} className="w-6 h-6 rounded shrink-0 p-0 border-0 bg-transparent cursor-pointer"/>
-                                                        <input type="text" value={mapping.target} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, target: e.target.value} : m))} className="w-14 bg-transparent border-0 text-xs text-on-surface uppercase p-0 outline-none" maxLength={7}/>
+                                                        <input id={`multi-target-${mapping.id}`} type="text" value={mapping.target} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, target: e.target.value} : m))} className="w-14 bg-transparent border-0 text-xs text-on-surface uppercase p-0 outline-none" maxLength={7}/>
                                                     </div>
                                                 </div>
                                                 <div className="text-outline">→</div>
@@ -776,7 +776,7 @@ export default function App() {
                                                     <label className="text-[10px] text-on-surface-variant block mb-1 uppercase tracking-wider">Replace</label>
                                                     <div className="flex items-center gap-2 bg-surface-container-lowest p-1.5 rounded border border-outline-variant">
                                                         <input type="color" value={safeHex(mapping.replacement)} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, replacement: e.target.value} : m))} className="w-6 h-6 rounded shrink-0 p-0 border-0 bg-transparent cursor-pointer"/>
-                                                        <input type="text" value={mapping.replacement} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, replacement: e.target.value} : m))} className="w-14 bg-transparent border-0 text-xs text-on-surface uppercase p-0 outline-none" maxLength={7}/>
+                                                        <input id={`multi-replace-${mapping.id}`} type="text" value={mapping.replacement} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, replacement: e.target.value} : m))} className="w-14 bg-transparent border-0 text-xs text-on-surface uppercase p-0 outline-none" maxLength={7}/>
                                                     </div>
                                                 </div>
                                             </div>
