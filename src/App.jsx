@@ -18,6 +18,7 @@ import {
 import { parseGIF, decompressFrames } from 'gifuct-js';
 import { GIFEncoder, quantize, applyPalette } from 'gifenc';
 import JSZip from 'jszip';
+import logoImg from './assets/logo.png';
 
 // Validates a 7-char hex color string like #ff00aa
 const isValidHex = (hex) => /^#[0-9a-f]{6}$/i.test(hex);
@@ -718,7 +719,7 @@ export default function App() {
                 <div className="max-w-[1440px] mx-auto px-6 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-6">
                         <div className="flex items-center gap-2">
-                            <ImageIcon className="w-6 h-6 text-primary" />
+                            <img src={logoImg} alt="RecolorFlow Logo" className="w-8 h-8 rounded" />
                             <span className="text-xl font-bold text-primary">RecolorFlow</span>
                         </div>
                         <nav className="hidden md:flex items-center gap-4 text-sm font-medium text-on-surface-variant">
@@ -1487,7 +1488,7 @@ export default function App() {
             <footer className="border-t border-outline-variant bg-surface-container-lowest py-8 text-center">
                 <div className="max-w-[1100px] mx-auto px-6 flex flex-col items-center gap-2">
                     <div className="flex items-center gap-2 font-bold text-on-surface">
-                        <ImageIcon className="w-5 h-5 text-primary" /> RecolorFlow
+                        <img src={logoImg} alt="RecolorFlow Logo" className="w-5 h-5 rounded" /> RecolorFlow
                     </div>
                     <div className="flex items-center gap-4 text-sm text-on-surface-variant mt-2">
                         <a href="#" className="hover:text-on-surface">Privacy Policy</a>
