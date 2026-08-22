@@ -765,28 +765,28 @@ export default function App() {
                                             
                                             <div className="flex items-center gap-4 mb-4">
                                                 <div className="flex-1">
-                                                    <label className="text-[10px] text-on-surface-variant block mb-1 uppercase tracking-wider">Target</label>
-                                                    <div className="flex items-center gap-2 bg-surface-container-lowest p-1.5 rounded border border-outline-variant">
-                                                        <input type="color" value={safeHex(mapping.target)} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, target: e.target.value} : m))} className="w-6 h-6 rounded shrink-0 p-0 border-0 bg-transparent cursor-pointer"/>
-                                                        <input id={`multi-target-${mapping.id}`} type="text" value={mapping.target} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, target: e.target.value} : m))} className="w-14 bg-transparent border-0 text-xs text-on-surface uppercase p-0 outline-none" maxLength={7}/>
+                                                    <label htmlFor={`multi-target-${mapping.id}`} className="text-[10px] text-on-surface-variant block mb-1 uppercase tracking-wider">Target</label>
+                                                    <div className="flex items-center gap-2 bg-surface-container-lowest p-1.5 rounded border border-outline-variant focus-within:border-primary transition-colors">
+                                                        <input aria-label={`Select Target Color for Mapping ${idx + 1}`} type="color" value={safeHex(mapping.target)} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, target: e.target.value} : m))} className="w-6 h-6 rounded shrink-0 p-0 border-0 bg-transparent cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"/>
+                                                        <input aria-label={`Enter Target Color Hex for Mapping ${idx + 1}`} id={`multi-target-${mapping.id}`} type="text" value={mapping.target} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, target: e.target.value} : m))} className="w-14 bg-transparent border-0 text-xs text-on-surface uppercase p-0 outline-none focus:ring-0" maxLength={7}/>
                                                     </div>
                                                 </div>
                                                 <div className="text-outline">→</div>
                                                 <div className="flex-1">
-                                                    <label className="text-[10px] text-on-surface-variant block mb-1 uppercase tracking-wider">Replace</label>
-                                                    <div className="flex items-center gap-2 bg-surface-container-lowest p-1.5 rounded border border-outline-variant">
-                                                        <input type="color" value={safeHex(mapping.replacement)} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, replacement: e.target.value} : m))} className="w-6 h-6 rounded shrink-0 p-0 border-0 bg-transparent cursor-pointer"/>
-                                                        <input id={`multi-replace-${mapping.id}`} type="text" value={mapping.replacement} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, replacement: e.target.value} : m))} className="w-14 bg-transparent border-0 text-xs text-on-surface uppercase p-0 outline-none" maxLength={7}/>
+                                                    <label htmlFor={`multi-replace-${mapping.id}`} className="text-[10px] text-on-surface-variant block mb-1 uppercase tracking-wider">Replace</label>
+                                                    <div className="flex items-center gap-2 bg-surface-container-lowest p-1.5 rounded border border-outline-variant focus-within:border-primary transition-colors">
+                                                        <input aria-label={`Select Replacement Color for Mapping ${idx + 1}`} type="color" value={safeHex(mapping.replacement)} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, replacement: e.target.value} : m))} className="w-6 h-6 rounded shrink-0 p-0 border-0 bg-transparent cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"/>
+                                                        <input aria-label={`Enter Replacement Color Hex for Mapping ${idx + 1}`} id={`multi-replace-${mapping.id}`} type="text" value={mapping.replacement} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, replacement: e.target.value} : m))} className="w-14 bg-transparent border-0 text-xs text-on-surface uppercase p-0 outline-none focus:ring-0" maxLength={7}/>
                                                     </div>
                                                 </div>
                                             </div>
                                             
                                             <div className="flex flex-col gap-2 pt-2 border-t border-outline-variant/50">
                                                 <div className="flex justify-between items-center">
-                                                    <label className="text-[10px] text-on-surface-variant">Tolerance</label>
+                                                    <label htmlFor={`multi-tolerance-${mapping.id}`} className="text-[10px] text-on-surface-variant">Tolerance</label>
                                                     <span className="text-[10px] text-primary font-medium">{mapping.tolerance}%</span>
                                                 </div>
-                                                <input type="range" min="0" max="100" value={mapping.tolerance} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, tolerance: parseInt(e.target.value)} : m))} className="w-full accent-primary bg-surface-container-high h-1 rounded-lg appearance-none cursor-pointer"/>
+                                                <input id={`multi-tolerance-${mapping.id}`} aria-label={`Tolerance for Mapping ${idx + 1}`} type="range" min="0" max="100" value={mapping.tolerance} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, tolerance: parseInt(e.target.value)} : m))} className="w-full accent-primary bg-surface-container-high h-1.5 rounded-lg appearance-none cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"/>
                                             </div>
                                         </div>
                                     ))}
@@ -827,26 +827,26 @@ export default function App() {
                                                 </button>
                                             </div>
                                             <div className="mb-4">
-                                                <label className="text-[10px] text-on-surface-variant uppercase block mb-1">Variant Name</label>
-                                                <input type="text" value={variant.name} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, name: e.target.value} : v))} className="w-full bg-surface-container-lowest border border-outline-variant rounded p-1.5 text-sm text-on-surface outline-none focus:border-primary"/>
+                                                <label htmlFor={`variant-name-${variant.id}`} className="text-[10px] text-on-surface-variant uppercase block mb-1">Variant Name</label>
+                                                <input id={`variant-name-${variant.id}`} aria-label={`Name for Variant ${vIdx + 1}`} type="text" value={variant.name} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, name: e.target.value} : v))} className="w-full bg-surface-container-lowest border border-outline-variant rounded p-1.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
                                             </div>
                                             
                                             <div className="space-y-3">
                                                 {variant.rules.map((rule, rIdx) => (
                                                     <div key={rule.id} onClick={() => { setSelectedVariantId(variant.id); setActiveSourceId(rule.id); }} className={`bg-surface-container-lowest p-3 rounded-lg border ${selectedVariantId === variant.id && activeSourceId === rule.id ? 'border-primary' : 'border-outline-variant'} cursor-pointer`}>
                                                         <div className="flex justify-between items-center mb-2">
-                                                            <span className="text-[10px] text-on-surface-variant">Rule {rIdx + 1}</span>
+                                                            <label htmlFor={`variant-${variant.id}-rule-${rule.id}-tolerance`} className="text-[10px] text-on-surface-variant">Rule {rIdx + 1}</label>
                                                             <button aria-label={`Delete Rule ${rIdx + 1} from Variant ${vIdx + 1}`} onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 setVariants(variants.map(v => v.id === variant.id ? {...v, rules: v.rules.filter(r => r.id !== rule.id)} : v));
                                                             }} className="p-2 -m-2 text-outline hover:text-error focus:outline-none focus-visible:ring-2 focus-visible:ring-error rounded"><Trash2 className="w-4 h-4"/></button>
                                                         </div>
-                                                        <div className="flex items-center gap-2 mb-2">
-                                                            <input type="color" value={safeHex(rule.target)} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, rules: v.rules.map(r => r.id === rule.id ? {...r, target: e.target.value} : r)} : v))} className="w-6 h-6 rounded p-0 border-0 bg-transparent shrink-0 cursor-pointer"/>
+                                                        <div className="flex items-center gap-2 mb-2 focus-within:border-primary transition-colors border border-transparent rounded p-0.5">
+                                                            <input aria-label={`Select Target Color for Rule ${rIdx + 1} in Variant ${vIdx + 1}`} type="color" value={safeHex(rule.target)} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, rules: v.rules.map(r => r.id === rule.id ? {...r, target: e.target.value} : r)} : v))} className="w-6 h-6 rounded p-0 border-0 bg-transparent shrink-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"/>
                                                             <span className="text-outline">→</span>
-                                                            <input type="color" value={safeHex(rule.replacement)} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, rules: v.rules.map(r => r.id === rule.id ? {...r, replacement: e.target.value} : r)} : v))} className="w-6 h-6 rounded p-0 border-0 bg-transparent shrink-0 cursor-pointer"/>
+                                                            <input aria-label={`Select Replacement Color for Rule ${rIdx + 1} in Variant ${vIdx + 1}`} type="color" value={safeHex(rule.replacement)} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, rules: v.rules.map(r => r.id === rule.id ? {...r, replacement: e.target.value} : r)} : v))} className="w-6 h-6 rounded p-0 border-0 bg-transparent shrink-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"/>
                                                         </div>
-                                                        <input type="range" min="0" max="100" value={rule.tolerance} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, rules: v.rules.map(r => r.id === rule.id ? {...r, tolerance: parseInt(e.target.value)} : r)} : v))} className="w-full accent-primary bg-surface-container-high h-1 rounded-lg appearance-none cursor-pointer"/>
+                                                        <input id={`variant-${variant.id}-rule-${rule.id}-tolerance`} aria-label={`Tolerance for Rule ${rIdx + 1} in Variant ${vIdx + 1}`} type="range" min="0" max="100" value={rule.tolerance} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, rules: v.rules.map(r => r.id === rule.id ? {...r, tolerance: parseInt(e.target.value)} : r)} : v))} className="w-full accent-primary bg-surface-container-high h-1.5 rounded-lg appearance-none cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"/>
                                                     </div>
                                                 ))}
                                             </div>
@@ -909,8 +909,8 @@ export default function App() {
                                         </div>
                                         
                                         <div className="pt-3 border-t border-outline-variant/50">
-                                            <label className="text-[10px] text-on-surface-variant block mb-1 uppercase tracking-wider">Output Suffix</label>
-                                            <input type="text" value={outputSuffix} onChange={(e) => setOutputSuffix(e.target.value)} className="w-full bg-surface-container-lowest border border-outline-variant rounded p-1.5 text-xs text-on-surface focus:outline-none focus:border-outline"/>
+                                            <label htmlFor="output-suffix" className="text-[10px] text-on-surface-variant block mb-1 uppercase tracking-wider">Output Suffix</label>
+                                            <input id="output-suffix" type="text" value={outputSuffix} onChange={(e) => setOutputSuffix(e.target.value)} className="w-full bg-surface-container-lowest border border-outline-variant rounded p-1.5 text-xs text-on-surface focus:outline-none focus:border-outline focus-visible:ring-1 focus-visible:ring-primary"/>
                                         </div>
                                         
                                         <div className="pt-3 border-t border-outline-variant/50">
