@@ -151,6 +151,7 @@ const applyRulesToImageData = (imageData, rules) => {
             src: hexToRgb(r.srcHex),
             tgt: hexToRgb(r.tgtHex),
             tolSq: tolDist * tolDist // Store squared tolerance for faster comparison
+
         };
     });
 
@@ -162,6 +163,7 @@ const applyRulesToImageData = (imageData, rules) => {
         for (let j = 0; j < parsedRules.length; j++) {
             const rule = parsedRules[j];
             const distSq = rgbDistanceSq(r, g, b, rule.src.r, rule.src.g, rule.src.b);
+
 
             if (distSq <= rule.tolSq) {
                 data[i] = rule.tgt.r;
@@ -1415,3 +1417,4 @@ const FAQItem = ({ question, children }) => {
         </div>
     );
 };
+

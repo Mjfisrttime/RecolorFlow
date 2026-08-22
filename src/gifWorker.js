@@ -26,13 +26,13 @@ const getUnusedColor = (imageData) => {
     const data = imageData.data;
     for (let i = 0; i < data.length; i += 4) {
         if (data[i + 3] > 128) {
-            used.add(`${data[i]},${data[i + 1]},${data[i + 2]}`);
+            used.add(\\,\,\\);
         }
     }
     for (let r = 0; r < 256; r += 21) {
         for (let g = 0; g < 256; g += 21) {
             for (let b = 0; b < 256; b += 21) {
-                if (!used.has(`${r},${g},${b}`)) return [r, g, b];
+                if (!used.has(\\,\,\\)) return [r, g, b];
             }
         }
     }
