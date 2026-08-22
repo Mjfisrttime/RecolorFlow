@@ -333,7 +333,7 @@ export default function App() {
         const filteredFiles = uploadedFiles.filter(f => validTypes.includes(f.type) || validTypes.some(t => f.name.toLowerCase().endsWith('.' + t.split('/')[1])));
         
         const newFiles = filteredFiles.map(file => ({
-            id: Math.random().toString(36).substr(2, 9),
+            id: crypto.randomUUID(),
             file,
             name: file.name,
             status: 'idle', // idle, processing, done, error
@@ -962,7 +962,7 @@ export default function App() {
 
                             <button
                                 onClick={() => {
-                                    const newId = Math.random().toString();
+                                    const newId = crypto.randomUUID();
                                     setSources([...sources, { id: newId, source: '#ffffff', tolerance: 20 }]);
                                     setActiveSourceId(newId);
                                 }}
@@ -1042,7 +1042,7 @@ export default function App() {
                                 </div>
                             ))}
                             <button onClick={() => {
-                                const newId = Math.random().toString();
+                                const newId = crypto.randomUUID();
                                 setMultiMappings([...multiMappings, { id: newId, target: '#ffffff', replacement: '#0000ff', tolerance: 20 }]);
                                 setActiveSourceId(newId);
                             }} className="w-full py-2 text-sm text-gray-400 border border-dashed border-gray-700 rounded-xl hover:border-purple-500 hover:text-purple-400 transition-colors">
@@ -1102,7 +1102,7 @@ export default function App() {
                                         ))}
                                     </div>
                                     <button onClick={() => {
-                                        const newRule = { id: Math.random().toString(), target: '#ffffff', replacement: '#00ff00', tolerance: 20 };
+                                        const newRule = { id: crypto.randomUUID(), target: '#ffffff', replacement: '#00ff00', tolerance: 20 };
                                         setVariants(variants.map(v => v.id === variant.id ? {...v, rules: [...v.rules, newRule]} : v));
                                         setSelectedVariantId(variant.id);
                                         setActiveSourceId(newRule.id);
@@ -1111,7 +1111,7 @@ export default function App() {
                             ))}
                             
                             <button onClick={() => {
-                                const newV = { id: Math.random().toString(), name: `Variant ${variants.length + 1}`, rules: [{ id: Math.random().toString(), target: '#ffffff', replacement: '#00ff00', tolerance: 20 }] };
+                                const newV = { id: crypto.randomUUID(), name: `Variant ${variants.length + 1}`, rules: [{ id: crypto.randomUUID(), target: '#ffffff', replacement: '#00ff00', tolerance: 20 }] };
                                 setVariants([...variants, newV]);
                                 setSelectedVariantId(newV.id);
                             }} className="w-full py-2 text-sm text-gray-400 border border-dashed border-gray-700 rounded-xl hover:border-green-500 hover:text-green-400 transition-colors">
