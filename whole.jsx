@@ -1378,23 +1378,26 @@ export default function App() {
                                     <AlertCircle className="w-4 h-4 shrink-0 text-blue-400" />
                                     Your files are processed locally in your browser and are not uploaded to a server.
                                 </div>
-                                <a 
-                                    href="https://webp-bulk.vercel.app/" 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-3 bg-gray-900/40 border border-gray-800 hover:border-blue-500/50 hover:bg-gray-800/60 text-gray-300 text-sm px-6 py-3 rounded-xl transition-all group mt-2"
-                                >
-                                    <div className="bg-blue-500/10 p-2 rounded-lg group-hover:bg-blue-500/20 transition-colors">
-                                        <Zap className="w-5 h-5 text-blue-400" />
-                                    </div>
-                                    <div className="text-left">
-                                        <div className="font-medium flex items-center gap-2">
-                                            WebP Bulk Converter
-                                            <ExternalLink className="w-3 h-3 text-gray-500 group-hover:text-blue-400 transition-colors" />
+                                                                <div className="mt-6 flex flex-col items-center gap-3">
+                                    <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Try Our Other Tools</span>
+                                    <a 
+                                        href="https://webp-bulk.vercel.app/" 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-3 bg-gray-900/40 border border-gray-800 hover:border-blue-500/50 hover:bg-gray-800/60 text-gray-300 text-sm px-6 py-3 rounded-xl transition-all group"
+                                    >
+                                        <div className="bg-blue-500/10 p-2 rounded-lg group-hover:bg-blue-500/20 transition-colors">
+                                            <Zap className="w-5 h-5 text-blue-400" />
                                         </div>
-                                        <div className="text-xs text-gray-500 group-hover:text-gray-400 transition-colors">Fast and local image to WebP conversion.</div>
-                                    </div>
-                                </a>
+                                        <div className="text-left">
+                                            <div className="font-medium flex items-center gap-2">
+                                                WebP Bulk Converter
+                                                <ExternalLink className="w-3 h-3 text-gray-500 group-hover:text-blue-400 transition-colors" />
+                                            </div>
+                                            <div className="text-xs text-gray-500 group-hover:text-gray-400 transition-colors">Fast and local image to WebP conversion.</div>
+                                        </div>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </section>
@@ -1438,6 +1441,7 @@ const FAQItem = ({ question, children }) => {
         </div>
     );
 };
+
 
 
 
