@@ -164,10 +164,10 @@ const applyRulesToImageData = (imageData, rules) => {
 
         for (let j = 0; j < parsedRules.length; j++) {
             const rule = parsedRules[j];
-            const distSq = rgbDistanceSq(r, g, b, rule.src.r, rule.src.g, rule.src.b);
-
-
-            if (distSq <= rule.tolSq) {
+            const dr = r - rule.src.r;
+            const dg = g - rule.src.g;
+            const db = b - rule.src.b;
+            if ((dr * dr + dg * dg + db * db) <= rule.tolSq) {
                 data[i] = rule.tgt.r;
                 data[i + 1] = rule.tgt.g;
                 data[i + 2] = rule.tgt.b;
@@ -429,6 +429,8 @@ export default function App() {
 
         let lastDrawTime = performance.now();
         let isFirstDraw = true; // Force instant draw on mount or rule update
+        
+        const recoloredCache = new Map();
 
         const drawFrame = (time) => {
             try {
@@ -454,7 +456,11 @@ export default function App() {
                         recoloredCanvasRef.current.height = frame.height;
                         const rules = getActiveRules();
                         if (rules.every(r => isValidHex(r.srcHex) && isValidHex(r.tgtHex))) {
-                            const recoloredData = applyRulesToImageData(frame.imageData, rules);
+                            let recoloredData = recoloredCache.get(previewFrameIdxRef.current);
+                            if (!recoloredData) {
+                                recoloredData = applyRulesToImageData(frame.imageData, rules);
+                                recoloredCache.set(previewFrameIdxRef.current, recoloredData);
+                            }
                             rCtx.putImageData(recoloredData, 0, 0);
                         } else {
                             // Show original when colors are invalid (mid-typing)
