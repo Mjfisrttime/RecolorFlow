@@ -520,11 +520,11 @@ export default function App() {
             </div>
 
             {/* MAIN WORKSPACE (3-panel grid) */}
-            <div className="max-w-[1440px] mx-auto w-full flex-1 p-6">
+            <div className="max-w-[1440px] mx-auto w-full flex-1 p-4 md:p-6 pb-28 md:pb-6">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 min-h-[600px] h-auto lg:h-[calc(100vh-250px)]">
 
                     {/* LEFT PANEL: File List */}
-                    <div className="lg:col-span-3 border border-outline-variant rounded-lg bg-surface-container-low flex flex-col h-[500px] lg:h-full shrink-0 overflow-hidden">
+                    <div className="lg:col-span-3 border border-outline-variant rounded-lg bg-surface-container-low flex flex-col h-[400px] md:h-[500px] lg:h-full shrink-0 overflow-hidden">
                         <div className="p-4 border-b border-outline-variant bg-surface-container">
                             <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-outline-variant hover:border-primary hover:bg-surface-container-high transition-colors rounded-xl cursor-pointer focus-within:ring-2 focus-within:ring-primary focus-within:border-primary" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.target.querySelector('input').click(); }} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); handleFileUpload(e); }}>
                                 <Upload className="w-6 h-6 text-on-surface-variant mb-2" />
@@ -587,7 +587,7 @@ export default function App() {
                     </div>
 
                     {/* CENTER PANEL: Preview */}
-                    <div className="lg:col-span-6 border border-outline-variant rounded-lg bg-[#000000] flex flex-col relative h-[500px] lg:h-full shrink-0 overflow-hidden">
+                    <div className="lg:col-span-6 border border-outline-variant rounded-lg bg-[#000000] flex flex-col relative h-[400px] md:h-[500px] lg:h-full shrink-0 overflow-hidden">
                         <div className="p-4 flex justify-between items-center border-b border-outline-variant bg-surface-container">
                             <h2 className="text-sm font-medium text-on-surface-variant">
                                 {selectedFile ? `Previewing: ${selectedFile.name}` : 'Live Preview'}
@@ -615,7 +615,7 @@ export default function App() {
 
                     </div>
                     {/* RIGHT PANEL: Controls */}
-                    <div className="lg:col-span-3 border border-outline-variant rounded-lg bg-surface-container-low flex flex-col h-[500px] lg:h-full shrink-0 overflow-hidden">
+                    <div className="lg:col-span-3 border border-outline-variant rounded-lg bg-surface-container-low flex flex-col h-auto max-h-[800px] lg:max-h-none lg:h-full shrink-0 overflow-hidden">
                         <div className="p-4 border-b border-outline-variant bg-surface-container">
                             <h2 className="font-semibold text-on-surface">Color Rules</h2>
                             <p className="text-xs text-on-surface-variant mt-1">Changes are applied top to bottom.</p>
@@ -930,34 +930,47 @@ export default function App() {
                             </div>
                         </div>
 
-                        <div className="p-4 border-t border-outline-variant bg-surface-container flex flex-col gap-3">
-                            <button
-                                onClick={processAll}
-                                disabled={files.length === 0 || isProcessing || !isValidHex(globalNewColor) || !sources.every(s => isValidHex(s.source))}
-                                className={`w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all md:hidden ${(files.length === 0 || !isValidHex(globalNewColor) || !sources.every(s => isValidHex(s.source))) ? 'bg-surface-container-high text-outline cursor-not-allowed' :
-                                        isProcessing ? 'bg-action-blue/50 text-on-surface cursor-wait' :
-                                            'bg-action-blue hover:bg-action-blue/90 text-white'
-                                    }`}
-                            >
-                                {isProcessing ? (
-                                    <><Loader2 className="w-5 h-5 animate-spin" /> Processing... {files.filter(f => f.status === 'processing' || f.status === 'done').length} / {files.length} files</>
-                                ) : doneCount === files.length && files.length > 0 ? (
-                                    <><CheckCircle2 className="w-5 h-5" /> Processed {files.length} files</>
-                                ) : (
-                                    `Apply to ${files.length} ${mode === 'gif' ? (files.length === 1 ? 'GIF' : 'GIFs') : (files.length === 1 ? 'Image' : 'Images')}`
-                                )}
-                            </button>
-
+                        <div className="hidden md:flex p-4 border-t border-outline-variant bg-surface-container flex-col gap-3 mt-auto">
                             <button
                                 onClick={downloadZip}
                                 disabled={doneCount === 0 || isProcessing}
-                                className={`w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all ${doneCount === 0 || isProcessing ? 'bg-surface-container-high text-outline cursor-not-allowed' :
+                                className={`w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${doneCount === 0 || isProcessing ? 'bg-surface-container-high text-outline cursor-not-allowed' :
                                         'bg-primary hover:bg-primary/90 text-surface'
                                     }`}
                             >
                                 <Download className="w-5 h-5" /> Download ZIP
                             </button>
                         </div>
+                    </div>
+
+                    {/* MOBILE STICKY ACTION BAR */}
+                    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-surface-container border-t border-outline-variant p-4 flex gap-3 z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+                        <button
+                            onClick={processAll}
+                            disabled={files.length === 0 || isProcessing || !isValidHex(globalNewColor) || !sources.every(s => isValidHex(s.source))}
+                            className={`flex-1 py-3 px-2 rounded-xl font-medium flex items-center justify-center gap-2 text-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-action-blue ${(files.length === 0 || !isValidHex(globalNewColor) || !sources.every(s => isValidHex(s.source))) ? 'bg-surface-container-high text-outline cursor-not-allowed' :
+                                    isProcessing ? 'bg-action-blue/50 text-on-surface cursor-wait' :
+                                        'bg-action-blue hover:bg-action-blue/90 text-white'
+                                }`}
+                        >
+                            {isProcessing ? (
+                                <><Loader2 className="w-4 h-4 animate-spin shrink-0" /> Processing...</>
+                            ) : doneCount === files.length && files.length > 0 ? (
+                                <><CheckCircle2 className="w-4 h-4 shrink-0" /> Done</>
+                            ) : (
+                                `Apply to ${files.length}`
+                            )}
+                        </button>
+
+                        <button
+                            onClick={downloadZip}
+                            disabled={doneCount === 0 || isProcessing}
+                            className={`flex-1 py-3 px-2 rounded-xl font-medium flex items-center justify-center gap-2 text-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${doneCount === 0 || isProcessing ? 'bg-surface-container-high text-outline cursor-not-allowed' :
+                                    'bg-primary hover:bg-primary/90 text-surface'
+                                }`}
+                        >
+                            <Download className="w-4 h-4 shrink-0" /> Download ZIP
+                        </button>
                     </div>
                 </div>
             </div>
