@@ -463,14 +463,14 @@ export default function App() {
             
             {/* STICKY HEADER (navbar) */}
             <header className="sticky top-0 z-50 border-b border-outline-variant bg-surface shrink-0">
-                <div className="max-w-[1440px] mx-auto px-6 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-6">
+                <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-4 flex flex-row items-center justify-between gap-2 sm:gap-4">
+                    <div className="flex items-center gap-2 sm:gap-6 min-w-0 flex-shrink">
                         <div 
-                            className="flex items-center gap-2 cursor-pointer"
+                            className="flex items-center gap-2 cursor-pointer min-w-0"
                             onClick={(e) => handleNavClick(e, 'editor')}
                         >
-                            <img src={logoImg} alt="RecolorFlow Logo" className="w-8 h-8 rounded" />
-                            <span className="text-xl font-bold text-primary">RecolorFlow</span>
+                            <img src={logoImg} alt="RecolorFlow Logo" className="w-8 h-8 rounded shrink-0" />
+                            <span className="text-lg sm:text-xl font-bold text-primary truncate">RecolorFlow</span>
                         </div>
                         <nav className="hidden md:flex items-center gap-4 text-sm font-medium text-on-surface-variant">
                             <a href="#" onClick={(e) => handleNavClick(e, 'editor')} className={`px-1 py-1 border-b-2 transition-colors ${currentPage === 'app' && activeNav === 'editor' ? 'border-primary text-on-surface' : 'border-transparent hover:text-on-surface'}`}>Editor</a>
@@ -479,7 +479,7 @@ export default function App() {
                             <a href="#changelog" onClick={(e) => handleNavClick(e, 'changelog')} className={`px-1 py-1 border-b-2 transition-colors ${currentPage === 'app' && activeNav === 'changelog' ? 'border-primary text-on-surface' : 'border-transparent hover:text-on-surface'}`}>Changelog</a>
                         </nav>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4 shrink-0">
                         <button 
                             onClick={() => setIsLight(!isLight)}
                             className="p-2 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"
@@ -621,14 +621,16 @@ export default function App() {
                             )}
                         </div>
 
-                        <div className="flex-1 flex items-center justify-center p-8 overflow-hidden bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjMWQyMDI3Ii8+PHJlY3QgeD0iMTAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIgZmlsbD0iIzEwMTMxYSIvPjxyZWN0IHk9IjEwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIGZpbGw9IiMxMDEzMWEiLz48cmVjdCB4PSIxMCIgeT0iMTAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIgZmlsbD0iIzFkMjAyNyIvPjwvc3ZnPg==')]">
-                            <PreviewCanvas 
-                                file={files.find(f => f.id === selectedFileId)} 
-                                mode={mode} 
-                                rules={getActiveRules()} 
-                                isPlaying={isPlaying} 
-                                onColorPick={handleColorPick} 
-                            />
+                        <div className="flex-1 overflow-auto overscroll-none touch-pan-x touch-pan-y bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjMWQyMDI3Ii8+PHJlY3QgeD0iMTAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIgZmlsbD0iIzEwMTMxYSIvPjxyZWN0IHk9IjEwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIGZpbGw9IiMxMDEzMWEiLz48cmVjdCB4PSIxMCIgeT0iMTAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIgZmlsbD0iIzFkMjAyNyIvPjwvc3ZnPg==')]">
+                            <div className="min-w-fit min-h-full p-4 sm:p-8 flex items-center justify-center">
+                                <PreviewCanvas
+                                    file={files.find(f => f.id === selectedFileId)}
+                                    mode={mode}
+                                    rules={getActiveRules()}
+                                    isPlaying={isPlaying}
+                                    onColorPick={handleColorPick}
+                                />
+                            </div>
                         </div>
 
                     </div>

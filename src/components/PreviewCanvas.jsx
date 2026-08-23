@@ -208,8 +208,8 @@ export default function PreviewCanvas({ file, mode, rules, isPlaying, onColorPic
     }
 
     return (
-        <div className="flex flex-col md:flex-row gap-8 items-center justify-center w-full max-w-4xl relative z-10">
-            <div className="flex flex-col items-center gap-3">
+        <div className="flex flex-col md:flex-row gap-8 items-center justify-center w-full relative z-10">
+            <div className="flex flex-col items-center gap-3 shrink-0">
                 <span className="text-xs font-semibold text-on-surface-variant tracking-wider uppercase flex items-center gap-2 drop-shadow-md">
                     Original <span className="bg-surface-container-high text-on-surface px-1.5 py-0.5 rounded text-[10px] normal-case border border-outline-variant">Click to pick color</span>
                 </span>
@@ -217,17 +217,17 @@ export default function PreviewCanvas({ file, mode, rules, isPlaying, onColorPic
                     className="rounded-xl overflow-hidden border border-outline-variant shadow-2xl relative cursor-crosshair group bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjMWQyMDI3Ii8+PHJlY3QgeD0iMTAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIgZmlsbD0iIzEwMTMxYSIvPjxyZWN0IHk9IjEwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIGZpbGw9IiMxMDEzMWEiLz48cmVjdCB4PSIxMCIgeT0iMTAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIgZmlsbD0iIzFkMjAyNyIvPjwvc3ZnPg==')]" 
                     title="Click to pick Target Color for the active rule"
                 >
-                    <canvas ref={originalCanvasRef} onClick={handleCanvasClick} className="max-w-[300px] max-h-[300px] object-contain relative z-10" />
+                    <canvas ref={originalCanvasRef} onClick={handleCanvasClick} className="max-w-[500px] max-h-[500px] object-contain relative z-10" />
                     <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-20" />
                 </div>
             </div>
 
-            <div className="flex flex-col items-center gap-3">
+            <div className="flex flex-col items-center gap-3 shrink-0">
                 <span className="text-xs font-semibold text-primary tracking-wider uppercase flex items-center gap-2 drop-shadow-md">
                     Recolored <span className="bg-primary/20 text-primary px-1.5 py-0.5 rounded text-[10px] normal-case border border-primary/30">Current Result</span>
                 </span>
                 <div className="rounded-xl overflow-hidden border border-primary/50 shadow-2xl shadow-primary/20 relative bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjMWQyMDI3Ii8+PHJlY3QgeD0iMTAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIgZmlsbD0iIzEwMTMxYSIvPjxyZWN0IHk9IjEwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIGZpbGw9IiMxMDEzMWEiLz48cmVjdCB4PSIxMCIgeT0iMTAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIgZmlsbD0iIzFkMjAyNyIvPjwvc3ZnPg==')]">
-                    <canvas ref={recoloredCanvasRef} className="max-w-[300px] max-h-[300px] object-contain" />
+                    <canvas ref={recoloredCanvasRef} className="max-w-[500px] max-h-[500px] object-contain" />
                 </div>
             </div>
         </div>
