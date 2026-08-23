@@ -28,17 +28,23 @@ export const getUnusedColor = (imageData) => {
         }
     }
     
-    for (let r = 0; r < 256; r += 21) {
-        for (let g = 0; g < 256; g += 21) {
-            for (let b = 0; b < 256; b += 21) {
-                if (!used.has((r << 16) | (g << 8) | b)) return [r, g, b];
-            }
-        }
+    const quickCandidates = [
+        [0, 255, 0],
+        [255, 0, 255],
+        [0, 255, 255],
+        [255, 255, 0],
+        [255, 0, 0],
+        [0, 0, 255]
+    ];
+    for (const [r, g, b] of quickCandidates) {
+        if (!used.has((r << 16) | (g << 8) | b)) return [r, g, b];
     }
     
-    for (let i = 0; i < 16777216; i++) {
-        if (!used.has(i)) {
-            return [(i >> 16) & 255, (i >> 8) & 255, i & 255];
+    for (let r = 0; r < 256; r += 51) {
+        for (let g = 0; g < 256; g += 51) {
+            for (let b = 0; b < 256; b += 51) {
+                if (!used.has((r << 16) | (g << 8) | b)) return [r, g, b];
+            }
         }
     }
     
@@ -102,7 +108,7 @@ export const decodeGif = (arrayBuffer) => {
 
         frames.push({
             imageData: ctx.getImageData(0, 0, width, height),
-            delay: Math.max(frame.delay, 20),
+            delay: Math.max(Number(frame.delay) || 0, 20),
             width: width,
             height: height
         });

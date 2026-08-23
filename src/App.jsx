@@ -138,7 +138,7 @@ export default function App() {
 
     useEffect(() => {
         resetFilesToIdle();
-    }, [getActiveRules, outputMode, outputSuffix, resetFilesToIdle]);
+    }, [outputMode, outputSuffix, sources, globalNewColor, multiMappings, variants, resetFilesToIdle]);
 
     const handleColorPick = useCallback((hex) => {
         if (!activeSourceId) return;
@@ -195,8 +195,6 @@ export default function App() {
         setFiles(prev => prev.filter(f => f.id !== id));
         if (selectedFileId === id) {
             setSelectedFileId(null);
-            setPreviewFrames([]);
-            setPreviewStatus('idle');
         }
     };
 
@@ -295,7 +293,7 @@ export default function App() {
                 } catch (err) {
                     console.error(`Error processing ${fileObj.name}:`, err);
                     setFiles(prev => prev.map(f =>
-                        f.id === fileObj.id ? { ...f, status: 'error' } : f
+                        f.id === fileObj.id ? { ...f, status: 'error', error: err.message } : f
                     ));
                 }
             }
@@ -343,7 +341,7 @@ export default function App() {
                 } catch (err) {
                     console.error(`Error processing ${fileObj.name}:`, err);
                     setFiles(prev => prev.map(f =>
-                        f.id === fileObj.id ? { ...f, status: 'error' } : f
+                        f.id === fileObj.id ? { ...f, status: 'error', error: err.message } : f
                     ));
                 }
             }
@@ -360,19 +358,39 @@ export default function App() {
     const downloadZip = async () => {
         const zip = new JSZip();
         let count = 0;
+        const usedNames = new Set();
+
+        const getUniqueName = (basePath) => {
+            let uniquePath = basePath;
+            let i = 1;
+            while (usedNames.has(uniquePath)) {
+                const lastDot = basePath.lastIndexOf('.');
+                if (lastDot !== -1) {
+                    uniquePath = `${basePath.substring(0, lastDot)}_${i}${basePath.substring(lastDot)}`;
+                } else {
+                    uniquePath = `${basePath}_${i}`;
+                }
+                i++;
+            }
+            usedNames.add(uniquePath);
+            return uniquePath;
+        };
 
         files.forEach(f => {
             if (f.status === 'done' && f.processedOutputs) {
                 f.processedOutputs.forEach(out => {
                     const extIndex = f.name.lastIndexOf('.');
                     const namePart = extIndex !== -1 ? f.name.substring(0, extIndex) : f.name;
-                    const extPart = extIndex !== -1 ? f.name.substring(extIndex) : '';
+                    // Fix extension mismatch for BMP converted to PNG
+                    const isBmpToPng = mode === 'image' && extIndex !== -1 && f.name.toLowerCase().endsWith('.bmp');
+                    const extPart = isBmpToPng ? '.png' : (extIndex !== -1 ? f.name.substring(extIndex) : '');
                     
                     const newName = `${namePart}${out.nameSuffix}${extPart}`;
                     if (outputMode === 'variants') {
-                        zip.file(`${out.variantName}/${newName}`, out.blob);
+                        const safeVariantName = out.variantName.replace(/[^a-z0-9_\-]/gi, '_');
+                        zip.file(getUniqueName(`${safeVariantName}/${newName}`), out.blob);
                     } else {
-                        zip.file(newName, out.blob);
+                        zip.file(getUniqueName(newName), out.blob);
                     }
                     count++;
                 });
@@ -391,7 +409,7 @@ export default function App() {
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        setTimeout(() => URL.revokeObjectURL(url), 100);
     };
 
     const downloadSingle = async (file) => {
@@ -413,7 +431,7 @@ export default function App() {
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            setTimeout(() => URL.revokeObjectURL(url), 100);
         } else {
             // For variants on a single file, download a mini-zip
             const zip = new JSZip();
@@ -432,7 +450,7 @@ export default function App() {
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            setTimeout(() => URL.revokeObjectURL(url), 100);
         }
     };
 
@@ -485,8 +503,8 @@ export default function App() {
                         </div>
                         <button
                             onClick={processAll}
-                            disabled={files.length === 0 || isProcessing || !isValidHex(globalNewColor) || !sources.every(s => isValidHex(s.source))}
-                            className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${(files.length === 0 || !isValidHex(globalNewColor) || !sources.every(s => isValidHex(s.source))) ? 'bg-surface-container-high text-outline cursor-not-allowed' :
+                            disabled={files.length === 0 || isProcessing || !getActiveRules().every(r => isValidHex(r.srcHex) && isValidHex(r.tgtHex))}
+                            className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${(files.length === 0 || !getActiveRules().every(r => isValidHex(r.srcHex) && isValidHex(r.tgtHex))) ? 'bg-surface-container-high text-outline cursor-not-allowed' :
                                     isProcessing ? 'bg-action-blue/50 text-on-surface cursor-wait' :
                                         'bg-action-blue hover:bg-action-blue/90 text-white'
                                 }`}
@@ -933,8 +951,8 @@ export default function App() {
                         <div className="p-4 border-t border-outline-variant bg-surface-container flex flex-col gap-3">
                             <button
                                 onClick={processAll}
-                                disabled={files.length === 0 || isProcessing || !isValidHex(globalNewColor) || !sources.every(s => isValidHex(s.source))}
-                                className={`w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all md:hidden ${(files.length === 0 || !isValidHex(globalNewColor) || !sources.every(s => isValidHex(s.source))) ? 'bg-surface-container-high text-outline cursor-not-allowed' :
+                                disabled={files.length === 0 || isProcessing || !getActiveRules().every(r => isValidHex(r.srcHex) && isValidHex(r.tgtHex))}
+                                className={`w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all md:hidden ${(files.length === 0 || !getActiveRules().every(r => isValidHex(r.srcHex) && isValidHex(r.tgtHex))) ? 'bg-surface-container-high text-outline cursor-not-allowed' :
                                         isProcessing ? 'bg-action-blue/50 text-on-surface cursor-wait' :
                                             'bg-action-blue hover:bg-action-blue/90 text-white'
                                     }`}

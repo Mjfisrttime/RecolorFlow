@@ -14,11 +14,19 @@ export default function PreviewCanvas({ file, mode, rules, isPlaying, onColorPic
     const rulesRef = useRef(rules);
     const recoloredCacheRef = useRef(new Map());
 
+    const forceRedrawRef = useRef(false);
+
     // Keep rules ref updated without triggering re-renders
     useEffect(() => {
         rulesRef.current = rules;
         recoloredCacheRef.current.clear();
+        forceRedrawRef.current = true;
     }, [rules]);
+
+    useEffect(() => {
+        recoloredCacheRef.current.clear();
+        forceRedrawRef.current = true;
+    }, [file]);
 
     useEffect(() => {
         let isCancelled = false;
@@ -90,17 +98,22 @@ export default function PreviewCanvas({ file, mode, rules, isPlaying, onColorPic
                 
                 const frame = previewFrames[previewFrameIdxRef.current];
 
-                if (isFirstDraw || (isPlaying && (time - lastDrawTime >= frame.delay))) {
+                if (isFirstDraw || forceRedrawRef.current || (isPlaying && (time - lastDrawTime >= frame.delay))) {
+                    forceRedrawRef.current = false;
                     const oCtx = originalCanvasRef.current?.getContext('2d');
                     const rCtx = recoloredCanvasRef.current?.getContext('2d');
 
                     if (oCtx && rCtx && frame.imageData) {
-                        originalCanvasRef.current.width = frame.width;
-                        originalCanvasRef.current.height = frame.height;
+                        if (originalCanvasRef.current.width !== frame.width) {
+                            originalCanvasRef.current.width = frame.width;
+                            originalCanvasRef.current.height = frame.height;
+                        }
                         oCtx.putImageData(frame.imageData, 0, 0);
 
-                        recoloredCanvasRef.current.width = frame.width;
-                        recoloredCanvasRef.current.height = frame.height;
+                        if (recoloredCanvasRef.current.width !== frame.width) {
+                            recoloredCanvasRef.current.width = frame.width;
+                            recoloredCanvasRef.current.height = frame.height;
+                        }
                         
                         const currentRules = rulesRef.current || [];
                         if (currentRules.every(r => isValidHex(r.srcHex) && isValidHex(r.tgtHex))) {
@@ -108,6 +121,10 @@ export default function PreviewCanvas({ file, mode, rules, isPlaying, onColorPic
                             if (!recoloredData) {
                                 recoloredData = applyRulesToImageData(frame.imageData, currentRules);
                                 recoloredCacheRef.current.set(previewFrameIdxRef.current, recoloredData);
+                                if (recoloredCacheRef.current.size > 15) {
+                                    const firstKey = recoloredCacheRef.current.keys().next().value;
+                                    recoloredCacheRef.current.delete(firstKey);
+                                }
                             }
                             rCtx.putImageData(recoloredData, 0, 0);
                         } else {
