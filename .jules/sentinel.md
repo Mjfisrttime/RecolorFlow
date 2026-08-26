@@ -12,3 +12,8 @@
 **Vulnerability:** Used `Math.random().toString()` to generate unique IDs for React components/state.
 **Learning:** `Math.random()` is not cryptographically secure and can lead to predictable IDs, potentially causing state collisions or predictable DOM structures if exposed.
 **Prevention:** Use `crypto.randomUUID()` for generating secure UUIDs in modern browsers.
+
+## 2024-05-24 - Zip Slip Vulnerability in File Downloads
+**Vulnerability:** Found that user-provided string values (`nameSuffix`, `variant.name`, and `file.name`) were being used directly to construct file paths and names inside JSZip without sanitization. An attacker could craft a payload with path traversal sequences like `../../` to overwrite unintended files when a user downloads and extracts the generated ZIP archive.
+**Learning:** Never trust input that will be used to construct file names or paths, especially when packaging them into archives like ZIP files. Path traversal sequences can lead to arbitrary file write vulnerabilities (Zip Slip) upon extraction.
+**Prevention:** Always sanitize any filename or path components derived from user input or untrusted sources before using them in file operations or adding them to an archive. A utility like `sanitizeFileName` that replaces `/`, `\`, and `..` should be used.
