@@ -38,10 +38,10 @@ export default function PrivacyPolicy() {
                     <div className="space-y-3 bg-surface-container-low p-8 rounded-2xl border border-outline-variant hover:border-outline transition-colors">
                         <h3 className="text-xl font-bold text-on-surface flex items-center gap-4">
                             <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 text-primary text-sm">3</span>
-                            No Tracking or Cookies
+                            Analytics
                         </h3>
                         <p className="text-base leading-relaxed pl-12 text-on-surface-variant">
-                            We do not use tracking cookies, web beacons, or third-party analytics services (such as Google Analytics) to monitor your behavior on our site.
+                            We use Google Analytics to understand how our users interact with RecolorFlow so we can improve the app. This service may use cookies to collect anonymous, aggregated usage data (such as page views and feature usage). We do not use analytics to track individual users or correlate usage with personal identities.
                         </p>
                     </div>
 
