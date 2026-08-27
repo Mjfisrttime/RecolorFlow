@@ -17,6 +17,14 @@ export const isReturningVisitor = () => {
 export const initAnalytics = () => {
     const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID;
     
+    // Prevent tracking on localhost so development testing doesn't pollute live data
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    
+    if (isLocalhost) {
+        console.debug('[Analytics] Google Analytics is disabled on localhost to prevent data inflation.');
+        return;
+    }
+
     if (gaId && gaId !== 'G-YOUR_MEASUREMENT_ID_HERE') {
         // Generate or retrieve the persistent device ID
         const visitorId = getVisitorId();
