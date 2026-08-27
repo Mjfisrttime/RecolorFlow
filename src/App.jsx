@@ -28,6 +28,13 @@ import PreviewCanvas from './components/PreviewCanvas.jsx';
 // Validates a 7-char hex color string like #ff00aa
 const isValidHex = (hex) => /^#[0-9a-f]{6}$/i.test(hex);
 
+// Sanitizes filenames to prevent path traversal (Zip Slip) and invalid characters
+// eslint-disable-next-line no-control-regex
+const sanitizeFileName = (name) => {
+    if (typeof name !== 'string') return '';
+        return name.replace(/[\x00-\x1F/\\:]/g, '_').replace(/\.\.+/g, '_');
+};
+
 // Safely get a value for <input type="color"> — must be valid 7-char hex
 const safeHex = (hex) => isValidHex(hex) ? hex : '#000000';
 
@@ -385,9 +392,9 @@ export default function App() {
                     const isBmpToPng = mode === 'image' && extIndex !== -1 && f.name.toLowerCase().endsWith('.bmp');
                     const extPart = isBmpToPng ? '.png' : (extIndex !== -1 ? f.name.substring(extIndex) : '');
                     
-                    const newName = `${namePart}${out.nameSuffix}${extPart}`;
+                    const newName = sanitizeFileName(`${namePart}${out.nameSuffix}${extPart}`);
                     if (outputMode === 'variants') {
-                        const safeVariantName = out.variantName.replace(/[^a-z0-9_\-]/gi, '_');
+                        const safeVariantName = sanitizeFileName(out.variantName.replace(/[^a-z0-9_-]/gi, '_'));
                         zip.file(getUniqueName(`${safeVariantName}/${newName}`), out.blob);
                     } else {
                         zip.file(getUniqueName(newName), out.blob);
@@ -422,7 +429,7 @@ export default function App() {
             const extIndex = file.name.lastIndexOf('.');
             const namePart = extIndex !== -1 ? file.name.substring(0, extIndex) : file.name;
             const extPart = extIndex !== -1 ? file.name.substring(extIndex) : '';
-            const newName = `${namePart}${out.nameSuffix}${extPart}`;
+            const newName = sanitizeFileName(`${namePart}${out.nameSuffix}${extPart}`);
             
             const url = URL.createObjectURL(out.blob);
             const a = document.createElement('a');
@@ -439,14 +446,14 @@ export default function App() {
                 const extIndex = file.name.lastIndexOf('.');
                 const namePart = extIndex !== -1 ? file.name.substring(0, extIndex) : file.name;
                 const extPart = extIndex !== -1 ? file.name.substring(extIndex) : '';
-                const newName = `${namePart}${out.nameSuffix}${extPart}`;
+                const newName = sanitizeFileName(`${namePart}${out.nameSuffix}${extPart}`);
                 zip.file(newName, out.blob);
             });
             const zipBlob = await zip.generateAsync({ type: 'blob' });
             const url = URL.createObjectURL(zipBlob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `variants-${file.name}.zip`;
+            a.download = sanitizeFileName(`variants-${file.name}.zip`);
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
