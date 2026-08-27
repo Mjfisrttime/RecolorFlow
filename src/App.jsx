@@ -15,7 +15,10 @@ import {
     ExternalLink,
     Zap,
     Moon,
-    Sun
+    Sun,
+    ZoomIn,
+    ZoomOut,
+    Search
 } from 'lucide-react';
 import JSZip from 'jszip';
 import logoImg from './assets/logo.svg';
@@ -135,6 +138,11 @@ export default function App() {
 
     const [isProcessing, setIsProcessing] = useState(false);
     const [isPlaying, setIsPlaying] = useState(true);
+    const [zoomLevel, setZoomLevel] = useState(1);
+    
+    const handleZoomIn = () => setZoomLevel(prev => Math.min(prev + 0.25, 5));
+    const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 0.25, 0.1));
+    const handleZoomReset = () => setZoomLevel(1);
 
     // Reset file statuses when color rules change so re-processing works
     const resetFilesToIdle = useCallback(() => {
@@ -617,15 +625,30 @@ export default function App() {
                             <h2 className="text-sm font-medium text-on-surface-variant">
                                 {selectedFile ? `Previewing: ${selectedFile.name}` : 'Live Preview'}
                             </h2>
-                            {selectedFile && mode === 'gif' && (
-                                <button
-                                    onClick={() => setIsPlaying(!isPlaying)}
-                                    className="flex items-center gap-2 px-3 py-1.5 bg-surface-container-high hover:bg-surface-container-highest rounded-lg text-sm text-on-surface transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                                >
-                                    {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                                    {isPlaying ? 'Pause' : 'Play'}
-                                </button>
-                            )}
+                            <div className="flex items-center gap-2">
+                                {selectedFile && (
+                                    <div className="flex items-center bg-surface-container-high rounded-lg p-1 border border-outline-variant">
+                                        <button onClick={handleZoomOut} className="p-1 hover:bg-surface-container-highest rounded text-on-surface-variant hover:text-on-surface transition-colors" aria-label="Zoom Out">
+                                            <ZoomOut className="w-4 h-4" />
+                                        </button>
+                                        <button onClick={handleZoomReset} className="px-2 text-xs font-medium text-on-surface min-w-[3rem] text-center hover:bg-surface-container-highest rounded transition-colors" title="Reset Zoom">
+                                            {Math.round(zoomLevel * 100)}%
+                                        </button>
+                                        <button onClick={handleZoomIn} className="p-1 hover:bg-surface-container-highest rounded text-on-surface-variant hover:text-on-surface transition-colors" aria-label="Zoom In">
+                                            <ZoomIn className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                )}
+                                {selectedFile && mode === 'gif' && (
+                                    <button
+                                        onClick={() => setIsPlaying(!isPlaying)}
+                                        className="flex items-center gap-2 px-3 py-1.5 bg-surface-container-high hover:bg-surface-container-highest rounded-lg text-sm text-on-surface transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ml-2"
+                                    >
+                                        {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                                        {isPlaying ? 'Pause' : 'Play'}
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         <div className="flex-1 overflow-auto overscroll-none touch-pan-x touch-pan-y bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjMWQyMDI3Ii8+PHJlY3QgeD0iMTAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIgZmlsbD0iIzEwMTMxYSIvPjxyZWN0IHk9IjEwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIGZpbGw9IiMxMDEzMWEiLz48cmVjdCB4PSIxMCIgeT0iMTAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIgZmlsbD0iIzFkMjAyNyIvPjwvc3ZnPg==')]">
@@ -636,6 +659,7 @@ export default function App() {
                                     rules={getActiveRules()}
                                     isPlaying={isPlaying}
                                     onColorPick={handleColorPick}
+                                    zoomLevel={zoomLevel}
                                 />
                             </div>
                         </div>

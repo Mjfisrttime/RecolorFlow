@@ -4,7 +4,7 @@ import { decodeGif, applyRulesToImageData } from '../core/gifEngine.js';
 
 const isValidHex = (hex) => /^#[0-9a-f]{6}$/i.test(hex);
 
-export default function PreviewCanvas({ file, mode, rules, isPlaying, onColorPick }) {
+export default function PreviewCanvas({ file, mode, rules, isPlaying, onColorPick, zoomLevel = 1 }) {
     const [previewFrames, setPreviewFrames] = useState([]);
     const [previewStatus, setPreviewStatus] = useState('idle');
     const originalCanvasRef = useRef(null);
@@ -217,7 +217,17 @@ export default function PreviewCanvas({ file, mode, rules, isPlaying, onColorPic
                     className="rounded-xl overflow-hidden border border-outline-variant shadow-2xl relative cursor-crosshair group bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjMWQyMDI3Ii8+PHJlY3QgeD0iMTAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIgZmlsbD0iIzEwMTMxYSIvPjxyZWN0IHk9IjEwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIGZpbGw9IiMxMDEzMWEiLz48cmVjdCB4PSIxMCIgeT0iMTAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIgZmlsbD0iIzFkMjAyNyIvPjwvc3ZnPg==')]" 
                     title="Click to pick Target Color for the active rule"
                 >
-                    <canvas ref={originalCanvasRef} onClick={handleCanvasClick} className="max-w-[500px] max-h-[500px] object-contain relative z-10" />
+                    <canvas 
+                        ref={originalCanvasRef} 
+                        onClick={handleCanvasClick} 
+                        className="object-contain relative z-10 transition-all duration-200" 
+                        style={{
+                            width: previewFrames[0] ? `${previewFrames[0].width * zoomLevel}px` : 'auto',
+                            height: previewFrames[0] ? `${previewFrames[0].height * zoomLevel}px` : 'auto',
+                            maxWidth: 'none',
+                            maxHeight: 'none'
+                        }}
+                    />
                     <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-20" />
                 </div>
             </div>
@@ -227,7 +237,16 @@ export default function PreviewCanvas({ file, mode, rules, isPlaying, onColorPic
                     Recolored <span className="bg-primary/20 text-primary px-1.5 py-0.5 rounded text-[10px] normal-case border border-primary/30">Current Result</span>
                 </span>
                 <div className="rounded-xl overflow-hidden border border-primary/50 shadow-2xl shadow-primary/20 relative bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjMWQyMDI3Ii8+PHJlY3QgeD0iMTAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIgZmlsbD0iIzEwMTMxYSIvPjxyZWN0IHk9IjEwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIGZpbGw9IiMxMDEzMWEiLz48cmVjdCB4PSIxMCIgeT0iMTAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIgZmlsbD0iIzFkMjAyNyIvPjwvc3ZnPg==')]">
-                    <canvas ref={recoloredCanvasRef} className="max-w-[500px] max-h-[500px] object-contain" />
+                    <canvas 
+                        ref={recoloredCanvasRef} 
+                        className="object-contain transition-all duration-200" 
+                        style={{
+                            width: previewFrames[0] ? `${previewFrames[0].width * zoomLevel}px` : 'auto',
+                            height: previewFrames[0] ? `${previewFrames[0].height * zoomLevel}px` : 'auto',
+                            maxWidth: 'none',
+                            maxHeight: 'none'
+                        }}
+                    />
                 </div>
             </div>
         </div>
