@@ -38,10 +38,12 @@ export default function PreviewCanvas({ file, mode, rules, isPlaying, onColorPic
                 return;
             }
 
+            setPreviewFrames([]);
             setPreviewStatus('loading');
             try {
                 if (mode === 'gif') {
                     const buffer = await file.file.arrayBuffer();
+                    if (isCancelled) return;
                     const frames = await decodeGif(buffer);
                     if (isCancelled) return;
                     if (!frames || frames.length === 0) throw new Error("No frames decoded");
@@ -117,10 +119,10 @@ export default function PreviewCanvas({ file, mode, rules, isPlaying, onColorPic
                         
                         const currentRules = rulesRef.current || [];
                         if (currentRules.every(r => isValidHex(r.srcHex) && isValidHex(r.tgtHex))) {
-                            let recoloredData = recoloredCacheRef.current.get(previewFrameIdxRef.current);
+                            let recoloredData = recoloredCacheRef.current.get(frame);
                             if (!recoloredData) {
                                 recoloredData = applyRulesToImageData(frame.imageData, currentRules);
-                                recoloredCacheRef.current.set(previewFrameIdxRef.current, recoloredData);
+                                recoloredCacheRef.current.set(frame, recoloredData);
                                 if (recoloredCacheRef.current.size > 15) {
                                     const firstKey = recoloredCacheRef.current.keys().next().value;
                                     recoloredCacheRef.current.delete(firstKey);
@@ -175,6 +177,19 @@ export default function PreviewCanvas({ file, mode, rules, isPlaying, onColorPic
         onColorPick(hex);
     };
 
+    const getBaseDimensions = () => {
+        if (!previewFrames || previewFrames.length === 0) return { width: 'auto', height: 'auto' };
+        const { width, height } = previewFrames[0];
+        // maxW and maxH define the 100% zoom size. We use 300 so both canvases fit perfectly side-by-side.
+        const maxW = 300;
+        const maxH = 300;
+        if (width <= maxW && height <= maxH) return { width, height };
+        const ratio = Math.min(maxW / width, maxH / height);
+        return { width: width * ratio, height: height * ratio };
+    };
+
+    const baseDim = getBaseDimensions();
+
     if (!file) {
         return (
             <div className="text-center text-outline bg-surface-container/80 p-6 rounded-xl backdrop-blur-sm">
@@ -222,8 +237,8 @@ export default function PreviewCanvas({ file, mode, rules, isPlaying, onColorPic
                         onClick={handleCanvasClick} 
                         className="object-contain relative z-10 transition-all duration-200" 
                         style={{
-                            width: previewFrames[0] ? `${previewFrames[0].width * zoomLevel}px` : 'auto',
-                            height: previewFrames[0] ? `${previewFrames[0].height * zoomLevel}px` : 'auto',
+                            width: baseDim.width !== 'auto' ? `${baseDim.width * zoomLevel}px` : 'auto',
+                            height: baseDim.height !== 'auto' ? `${baseDim.height * zoomLevel}px` : 'auto',
                             maxWidth: 'none',
                             maxHeight: 'none'
                         }}
@@ -241,8 +256,8 @@ export default function PreviewCanvas({ file, mode, rules, isPlaying, onColorPic
                         ref={recoloredCanvasRef} 
                         className="object-contain transition-all duration-200" 
                         style={{
-                            width: previewFrames[0] ? `${previewFrames[0].width * zoomLevel}px` : 'auto',
-                            height: previewFrames[0] ? `${previewFrames[0].height * zoomLevel}px` : 'auto',
+                            width: baseDim.width !== 'auto' ? `${baseDim.width * zoomLevel}px` : 'auto',
+                            height: baseDim.height !== 'auto' ? `${baseDim.height * zoomLevel}px` : 'auto',
                             maxWidth: 'none',
                             maxHeight: 'none'
                         }}
