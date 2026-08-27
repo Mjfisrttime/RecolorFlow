@@ -538,11 +538,11 @@ export default function App() {
             </div>
 
             {/* MAIN WORKSPACE (3-panel grid) */}
-            <div className="max-w-[1440px] mx-auto w-full flex-1 p-6">
+            <div className="max-w-[1440px] mx-auto w-full flex-1 p-4 md:p-6 pb-28 md:pb-6">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 min-h-[600px] h-auto lg:h-[calc(100vh-250px)]">
 
                     {/* LEFT PANEL: File List */}
-                    <div className="lg:col-span-3 border border-outline-variant rounded-lg bg-surface-container-low flex flex-col h-[500px] lg:h-full shrink-0 overflow-hidden">
+                    <div className="lg:col-span-3 border border-outline-variant rounded-lg bg-surface-container-low flex flex-col h-[400px] md:h-[500px] lg:h-full shrink-0 overflow-hidden">
                         <div className="p-4 border-b border-outline-variant bg-surface-container">
                             <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-outline-variant hover:border-primary hover:bg-surface-container-high transition-colors rounded-xl cursor-pointer focus-within:ring-2 focus-within:ring-primary focus-within:border-primary" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.target.querySelector('input').click(); }} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); handleFileUpload(e); }}>
                                 <Upload className="w-6 h-6 text-on-surface-variant mb-2" />
@@ -605,7 +605,7 @@ export default function App() {
                     </div>
 
                     {/* CENTER PANEL: Preview */}
-                    <div className="lg:col-span-6 border border-outline-variant rounded-lg bg-[#000000] flex flex-col relative h-[500px] lg:h-full shrink-0 overflow-hidden">
+                    <div className="lg:col-span-6 border border-outline-variant rounded-lg bg-[#000000] flex flex-col relative h-[400px] md:h-[500px] lg:h-full shrink-0 overflow-hidden">
                         <div className="p-4 flex justify-between items-center border-b border-outline-variant bg-surface-container">
                             <h2 className="text-sm font-medium text-on-surface-variant">
                                 {selectedFile ? `Previewing: ${selectedFile.name}` : 'Live Preview'}
@@ -633,7 +633,7 @@ export default function App() {
 
                     </div>
                     {/* RIGHT PANEL: Controls */}
-                    <div className="lg:col-span-3 border border-outline-variant rounded-lg bg-surface-container-low flex flex-col h-[500px] lg:h-full shrink-0 overflow-hidden">
+                    <div className="lg:col-span-3 border border-outline-variant rounded-lg bg-surface-container-low flex flex-col h-auto max-h-[800px] lg:max-h-none lg:h-full shrink-0 overflow-hidden">
                         <div className="p-4 border-b border-outline-variant bg-surface-container">
                             <h2 className="font-semibold text-on-surface">Color Rules</h2>
                             <p className="text-xs text-on-surface-variant mt-1">Changes are applied top to bottom.</p>
@@ -783,28 +783,28 @@ export default function App() {
                                             
                                             <div className="flex items-center gap-4 mb-4">
                                                 <div className="flex-1">
-                                                    <label className="text-[10px] text-on-surface-variant block mb-1 uppercase tracking-wider">Target</label>
-                                                    <div className="flex items-center gap-2 bg-surface-container-lowest p-1.5 rounded border border-outline-variant">
-                                                        <input type="color" value={safeHex(mapping.target)} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, target: e.target.value} : m))} className="w-6 h-6 rounded shrink-0 p-0 border-0 bg-transparent cursor-pointer"/>
-                                                        <input id={`multi-target-${mapping.id}`} type="text" value={mapping.target} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, target: e.target.value} : m))} className="w-14 bg-transparent border-0 text-xs text-on-surface uppercase p-0 outline-none" maxLength={7}/>
+                                                    <label htmlFor={`multi-target-${mapping.id}`} className="text-[10px] text-on-surface-variant block mb-1 uppercase tracking-wider">Target</label>
+                                                    <div className="flex items-center gap-2 bg-surface-container-lowest p-1.5 rounded border border-outline-variant focus-within:border-primary transition-colors">
+                                                        <input aria-label={`Select Target Color for Mapping ${idx + 1}`} type="color" value={safeHex(mapping.target)} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, target: e.target.value} : m))} className="w-6 h-6 rounded shrink-0 p-0 border-0 bg-transparent cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"/>
+                                                        <input aria-label={`Enter Target Color Hex for Mapping ${idx + 1}`} id={`multi-target-${mapping.id}`} type="text" value={mapping.target} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, target: e.target.value} : m))} className="w-14 bg-transparent border-0 text-xs text-on-surface uppercase p-0 outline-none focus:ring-0" maxLength={7}/>
                                                     </div>
                                                 </div>
                                                 <div className="text-outline">→</div>
                                                 <div className="flex-1">
-                                                    <label className="text-[10px] text-on-surface-variant block mb-1 uppercase tracking-wider">Replace</label>
-                                                    <div className="flex items-center gap-2 bg-surface-container-lowest p-1.5 rounded border border-outline-variant">
-                                                        <input type="color" value={safeHex(mapping.replacement)} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, replacement: e.target.value} : m))} className="w-6 h-6 rounded shrink-0 p-0 border-0 bg-transparent cursor-pointer"/>
-                                                        <input id={`multi-replace-${mapping.id}`} type="text" value={mapping.replacement} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, replacement: e.target.value} : m))} className="w-14 bg-transparent border-0 text-xs text-on-surface uppercase p-0 outline-none" maxLength={7}/>
+                                                    <label htmlFor={`multi-replace-${mapping.id}`} className="text-[10px] text-on-surface-variant block mb-1 uppercase tracking-wider">Replace</label>
+                                                    <div className="flex items-center gap-2 bg-surface-container-lowest p-1.5 rounded border border-outline-variant focus-within:border-primary transition-colors">
+                                                        <input aria-label={`Select Replacement Color for Mapping ${idx + 1}`} type="color" value={safeHex(mapping.replacement)} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, replacement: e.target.value} : m))} className="w-6 h-6 rounded shrink-0 p-0 border-0 bg-transparent cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"/>
+                                                        <input aria-label={`Enter Replacement Color Hex for Mapping ${idx + 1}`} id={`multi-replace-${mapping.id}`} type="text" value={mapping.replacement} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, replacement: e.target.value} : m))} className="w-14 bg-transparent border-0 text-xs text-on-surface uppercase p-0 outline-none focus:ring-0" maxLength={7}/>
                                                     </div>
                                                 </div>
                                             </div>
                                             
                                             <div className="flex flex-col gap-2 pt-2 border-t border-outline-variant/50">
                                                 <div className="flex justify-between items-center">
-                                                    <label className="text-[10px] text-on-surface-variant">Tolerance</label>
+                                                    <label htmlFor={`multi-tolerance-${mapping.id}`} className="text-[10px] text-on-surface-variant">Tolerance</label>
                                                     <span className="text-[10px] text-primary font-medium">{mapping.tolerance}%</span>
                                                 </div>
-                                                <input type="range" min="0" max="100" value={mapping.tolerance} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, tolerance: parseInt(e.target.value)} : m))} className="w-full accent-primary bg-surface-container-high h-1 rounded-lg appearance-none cursor-pointer"/>
+                                                <input id={`multi-tolerance-${mapping.id}`} aria-label={`Tolerance for Mapping ${idx + 1}`} type="range" min="0" max="100" value={mapping.tolerance} onChange={e => setMultiMappings(multiMappings.map(m => m.id === mapping.id ? {...m, tolerance: parseInt(e.target.value)} : m))} className="w-full accent-primary bg-surface-container-high h-1.5 rounded-lg appearance-none cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"/>
                                             </div>
                                         </div>
                                     ))}
@@ -845,26 +845,26 @@ export default function App() {
                                                 </button>
                                             </div>
                                             <div className="mb-4">
-                                                <label className="text-[10px] text-on-surface-variant uppercase block mb-1">Variant Name</label>
-                                                <input type="text" value={variant.name} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, name: e.target.value} : v))} className="w-full bg-surface-container-lowest border border-outline-variant rounded p-1.5 text-sm text-on-surface outline-none focus:border-primary"/>
+                                                <label htmlFor={`variant-name-${variant.id}`} className="text-[10px] text-on-surface-variant uppercase block mb-1">Variant Name</label>
+                                                <input id={`variant-name-${variant.id}`} aria-label={`Name for Variant ${vIdx + 1}`} type="text" value={variant.name} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, name: e.target.value} : v))} className="w-full bg-surface-container-lowest border border-outline-variant rounded p-1.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
                                             </div>
                                             
                                             <div className="space-y-3">
                                                 {variant.rules.map((rule, rIdx) => (
                                                     <div key={rule.id} onClick={() => { setSelectedVariantId(variant.id); setActiveSourceId(rule.id); }} className={`bg-surface-container-lowest p-3 rounded-lg border ${selectedVariantId === variant.id && activeSourceId === rule.id ? 'border-primary' : 'border-outline-variant'} cursor-pointer`}>
                                                         <div className="flex justify-between items-center mb-2">
-                                                            <span className="text-[10px] text-on-surface-variant">Rule {rIdx + 1}</span>
+                                                            <label htmlFor={`variant-${variant.id}-rule-${rule.id}-tolerance`} className="text-[10px] text-on-surface-variant">Rule {rIdx + 1}</label>
                                                             <button aria-label={`Delete Rule ${rIdx + 1} from Variant ${vIdx + 1}`} onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 setVariants(variants.map(v => v.id === variant.id ? {...v, rules: v.rules.filter(r => r.id !== rule.id)} : v));
                                                             }} className="p-2 -m-2 text-outline hover:text-error focus:outline-none focus-visible:ring-2 focus-visible:ring-error rounded"><Trash2 className="w-4 h-4"/></button>
                                                         </div>
-                                                        <div className="flex items-center gap-2 mb-2">
-                                                            <input type="color" value={safeHex(rule.target)} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, rules: v.rules.map(r => r.id === rule.id ? {...r, target: e.target.value} : r)} : v))} className="w-6 h-6 rounded p-0 border-0 bg-transparent shrink-0 cursor-pointer"/>
+                                                        <div className="flex items-center gap-2 mb-2 focus-within:border-primary transition-colors border border-transparent rounded p-0.5">
+                                                            <input aria-label={`Select Target Color for Rule ${rIdx + 1} in Variant ${vIdx + 1}`} type="color" value={safeHex(rule.target)} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, rules: v.rules.map(r => r.id === rule.id ? {...r, target: e.target.value} : r)} : v))} className="w-6 h-6 rounded p-0 border-0 bg-transparent shrink-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"/>
                                                             <span className="text-outline">→</span>
-                                                            <input type="color" value={safeHex(rule.replacement)} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, rules: v.rules.map(r => r.id === rule.id ? {...r, replacement: e.target.value} : r)} : v))} className="w-6 h-6 rounded p-0 border-0 bg-transparent shrink-0 cursor-pointer"/>
+                                                            <input aria-label={`Select Replacement Color for Rule ${rIdx + 1} in Variant ${vIdx + 1}`} type="color" value={safeHex(rule.replacement)} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, rules: v.rules.map(r => r.id === rule.id ? {...r, replacement: e.target.value} : r)} : v))} className="w-6 h-6 rounded p-0 border-0 bg-transparent shrink-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"/>
                                                         </div>
-                                                        <input type="range" min="0" max="100" value={rule.tolerance} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, rules: v.rules.map(r => r.id === rule.id ? {...r, tolerance: parseInt(e.target.value)} : r)} : v))} className="w-full accent-primary bg-surface-container-high h-1 rounded-lg appearance-none cursor-pointer"/>
+                                                        <input id={`variant-${variant.id}-rule-${rule.id}-tolerance`} aria-label={`Tolerance for Rule ${rIdx + 1} in Variant ${vIdx + 1}`} type="range" min="0" max="100" value={rule.tolerance} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, rules: v.rules.map(r => r.id === rule.id ? {...r, tolerance: parseInt(e.target.value)} : r)} : v))} className="w-full accent-primary bg-surface-container-high h-1.5 rounded-lg appearance-none cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"/>
                                                     </div>
                                                 ))}
                                             </div>
@@ -927,8 +927,8 @@ export default function App() {
                                         </div>
                                         
                                         <div className="pt-3 border-t border-outline-variant/50">
-                                            <label className="text-[10px] text-on-surface-variant block mb-1 uppercase tracking-wider">Output Suffix</label>
-                                            <input type="text" value={outputSuffix} onChange={(e) => setOutputSuffix(e.target.value)} className="w-full bg-surface-container-lowest border border-outline-variant rounded p-1.5 text-xs text-on-surface focus:outline-none focus:border-outline"/>
+                                            <label htmlFor="output-suffix" className="text-[10px] text-on-surface-variant block mb-1 uppercase tracking-wider">Output Suffix</label>
+                                            <input id="output-suffix" type="text" value={outputSuffix} onChange={(e) => setOutputSuffix(e.target.value)} className="w-full bg-surface-container-lowest border border-outline-variant rounded p-1.5 text-xs text-on-surface focus:outline-none focus:border-outline focus-visible:ring-1 focus-visible:ring-primary"/>
                                         </div>
                                         
                                         <div className="pt-3 border-t border-outline-variant/50">
@@ -948,34 +948,47 @@ export default function App() {
                             </div>
                         </div>
 
-                        <div className="p-4 border-t border-outline-variant bg-surface-container flex flex-col gap-3">
-                            <button
-                                onClick={processAll}
-                                disabled={files.length === 0 || isProcessing || !getActiveRules().every(r => isValidHex(r.srcHex) && isValidHex(r.tgtHex))}
-                                className={`w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all md:hidden ${(files.length === 0 || !getActiveRules().every(r => isValidHex(r.srcHex) && isValidHex(r.tgtHex))) ? 'bg-surface-container-high text-outline cursor-not-allowed' :
-                                        isProcessing ? 'bg-action-blue/50 text-on-surface cursor-wait' :
-                                            'bg-action-blue hover:bg-action-blue/90 text-white'
-                                    }`}
-                            >
-                                {isProcessing ? (
-                                    <><Loader2 className="w-5 h-5 animate-spin" /> Processing... {files.filter(f => f.status === 'processing' || f.status === 'done').length} / {files.length} files</>
-                                ) : doneCount === files.length && files.length > 0 ? (
-                                    <><CheckCircle2 className="w-5 h-5" /> Processed {files.length} files</>
-                                ) : (
-                                    `Apply to ${files.length} ${mode === 'gif' ? (files.length === 1 ? 'GIF' : 'GIFs') : (files.length === 1 ? 'Image' : 'Images')}`
-                                )}
-                            </button>
-
+                        <div className="hidden md:flex p-4 border-t border-outline-variant bg-surface-container flex-col gap-3 mt-auto">
                             <button
                                 onClick={downloadZip}
                                 disabled={doneCount === 0 || isProcessing}
-                                className={`w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all ${doneCount === 0 || isProcessing ? 'bg-surface-container-high text-outline cursor-not-allowed' :
+                                className={`w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${doneCount === 0 || isProcessing ? 'bg-surface-container-high text-outline cursor-not-allowed' :
                                         'bg-primary hover:bg-primary/90 text-surface'
                                     }`}
                             >
                                 <Download className="w-5 h-5" /> Download ZIP
                             </button>
                         </div>
+                    </div>
+
+                    {/* MOBILE STICKY ACTION BAR */}
+                    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-surface-container border-t border-outline-variant p-4 flex gap-3 z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+                        <button
+                            onClick={processAll}
+                            disabled={files.length === 0 || isProcessing || !isValidHex(globalNewColor) || !sources.every(s => isValidHex(s.source))}
+                            className={`flex-1 py-3 px-2 rounded-xl font-medium flex items-center justify-center gap-2 text-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-action-blue ${(files.length === 0 || !isValidHex(globalNewColor) || !sources.every(s => isValidHex(s.source))) ? 'bg-surface-container-high text-outline cursor-not-allowed' :
+                                    isProcessing ? 'bg-action-blue/50 text-on-surface cursor-wait' :
+                                        'bg-action-blue hover:bg-action-blue/90 text-white'
+                                }`}
+                        >
+                            {isProcessing ? (
+                                <><Loader2 className="w-4 h-4 animate-spin shrink-0" /> Processing...</>
+                            ) : doneCount === files.length && files.length > 0 ? (
+                                <><CheckCircle2 className="w-4 h-4 shrink-0" /> Done</>
+                            ) : (
+                                `Apply to ${files.length}`
+                            )}
+                        </button>
+
+                        <button
+                            onClick={downloadZip}
+                            disabled={doneCount === 0 || isProcessing}
+                            className={`flex-1 py-3 px-2 rounded-xl font-medium flex items-center justify-center gap-2 text-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${doneCount === 0 || isProcessing ? 'bg-surface-container-high text-outline cursor-not-allowed' :
+                                    'bg-primary hover:bg-primary/90 text-surface'
+                                }`}
+                        >
+                            <Download className="w-4 h-4 shrink-0" /> Download ZIP
+                        </button>
                     </div>
                 </div>
             </div>
