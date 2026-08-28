@@ -4,7 +4,17 @@ export const getVisitorId = () => {
     let visitorId = localStorage.getItem('rf_visitor_id');
     if (!visitorId) {
         // Generate a random ID like 'device_1234abcd-...'
-        visitorId = 'device_' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15));
+        // If crypto.randomUUID is not available, fallback to crypto.getRandomValues
+        let newId = '';
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+            newId = crypto.randomUUID();
+        } else if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+            newId = crypto.getRandomValues(new Uint32Array(4)).join('-');
+        } else {
+            // As a last resort, fallback to a pseudo-random value
+            newId = Math.random().toString(36).substring(2, 15);
+        }
+        visitorId = 'device_' + newId;
         localStorage.setItem('rf_visitor_id', visitorId);
     }
     return visitorId;
