@@ -179,7 +179,12 @@ export default function App() {
             ? ['image/gif'] 
             : ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/bmp', 'image/gif'];
         
-        const filteredFiles = uploadedFiles.filter(f => validTypes.includes(f.type) || validTypes.some(t => f.name.toLowerCase().endsWith('.' + t.split('/')[1])));
+        // Enforce max file size (10MB) to prevent Client-Side DoS via memory exhaustion
+        const MAX_FILE_SIZE = 10 * 1024 * 1024;
+        const filteredFiles = uploadedFiles.filter(f => {
+            const isValidType = validTypes.includes(f.type) || validTypes.some(t => f.name.toLowerCase().endsWith('.' + t.split('/')[1]));
+            return isValidType && f.size <= MAX_FILE_SIZE;
+        });
         
         if (filteredFiles.length > 0) {
             trackEvent('file_uploaded', { mode, file_count: filteredFiles.length });
@@ -193,7 +198,18 @@ export default function App() {
             dataUrl: URL.createObjectURL(file)
         }));
 
-        setFiles(prev => [...prev, ...newFiles]);
+        setFiles(prev => {
+            // Enforce max total files (50) to prevent Client-Side DoS
+            const MAX_TOTAL_FILES = 50;
+            const updatedFiles = [...prev, ...newFiles];
+            if (updatedFiles.length > MAX_TOTAL_FILES) {
+                console.warn(`File upload limit reached. Keeping the first ${MAX_TOTAL_FILES} files.`);
+                // Clean up object URLs for dropped files
+                updatedFiles.slice(MAX_TOTAL_FILES).forEach(f => URL.revokeObjectURL(f.dataUrl));
+                return updatedFiles.slice(0, MAX_TOTAL_FILES);
+            }
+            return updatedFiles;
+        });
         if (!selectedFileId && newFiles.length > 0) {
             setSelectedFileId(newFiles[0].id);
         }
@@ -879,7 +895,7 @@ export default function App() {
                                             </div>
                                             <div className="mb-4">
                                                 <label htmlFor={`variant-name-${variant.id}`} className="text-[10px] text-on-surface-variant uppercase block mb-1">Variant Name</label>
-                                                <input id={`variant-name-${variant.id}`} aria-label={`Name for Variant ${vIdx + 1}`} type="text" value={variant.name} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, name: e.target.value} : v))} className="w-full bg-surface-container-lowest border border-outline-variant rounded p-1.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
+                                                <input id={`variant-name-${variant.id}`} aria-label={`Name for Variant ${vIdx + 1}`} type="text" value={variant.name} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, name: e.target.value} : v))} maxLength={50} className="w-full bg-surface-container-lowest border border-outline-variant rounded p-1.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
                                             </div>
                                             
                                             <div className="space-y-3">
@@ -961,7 +977,7 @@ export default function App() {
                                         
                                         <div className="pt-3 border-t border-outline-variant/50">
                                             <label htmlFor="output-suffix" className="text-[10px] text-on-surface-variant block mb-1 uppercase tracking-wider">Output Suffix</label>
-                                            <input id="output-suffix" type="text" value={outputSuffix} onChange={(e) => setOutputSuffix(e.target.value)} className="w-full bg-surface-container-lowest border border-outline-variant rounded p-1.5 text-xs text-on-surface focus:outline-none focus:border-outline focus-visible:ring-1 focus-visible:ring-primary"/>
+                                            <input id="output-suffix" type="text" value={outputSuffix} onChange={(e) => setOutputSuffix(e.target.value)} maxLength={50} className="w-full bg-surface-container-lowest border border-outline-variant rounded p-1.5 text-xs text-on-surface focus:outline-none focus:border-outline focus-visible:ring-1 focus-visible:ring-primary"/>
                                         </div>
                                         
                                         <div className="pt-3 border-t border-outline-variant/50">
