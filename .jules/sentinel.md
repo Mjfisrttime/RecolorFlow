@@ -17,3 +17,8 @@
 **Vulnerability:** User-controlled filenames and paths (such as original file names, `outputSuffix`, and variant names) were not being sanitized before being used to generate download files and particularly when being added to a JSZip archive (e.g. `zip.file(getUniqueName(\`${safeVariantName}/${newName}\`), out.blob)`). This is a classic Zip Slip vulnerability where malicious filenames containing `../` sequences could potentially extract files outside of the intended target directory.
 **Learning:** Even entirely client-side apps that generate ZIP files can be vectors for Zip Slip if the generated zip is eventually extracted by a vulnerable tool. Relying on default browser download behaviors or user-supplied suffixes/names without sanitization is risky.
 **Prevention:** Always sanitize strings that will be used to construct filenames or paths. A robust `sanitizeFileName` function that strips `/`, `\`, null bytes, and path traversal sequences (`..`) is required before creating files or zip entries based on user input.
+
+## 2024-05-27 - [Client-Side DoS via File Uploads]
+**Vulnerability:** Client-Side DoS (memory exhaustion) risk due to unrestricted file uploads.
+**Learning:** During in-browser processing, especially when reading file blobs or handling multiple uploads concurrently, uploading too many large files can quickly exhaust client memory and crash the browser tab.
+**Prevention:** Enforce strict limits on file uploads (e.g., maximum file count and maximum size) in upload handlers like `handleFileUpload`. Also enforce `maxLength` on user text inputs that are passed to file-generation APIs to prevent excessive memory usage or long-running computations.
