@@ -181,11 +181,37 @@ export default function App() {
         
         const filteredFiles = uploadedFiles.filter(f => validTypes.includes(f.type) || validTypes.some(t => f.name.toLowerCase().endsWith('.' + t.split('/')[1])));
         
-        if (filteredFiles.length > 0) {
-            trackEvent('file_uploaded', { mode, file_count: filteredFiles.length });
+        const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+        const MAX_FILE_COUNT = 50;
+        const errors = [];
+        const validSizeFiles = [];
+
+        filteredFiles.forEach(f => {
+            if (f.size > MAX_FILE_SIZE) {
+                errors.push(`File ${f.name} exceeds the 50MB limit.`);
+            } else {
+                validSizeFiles.push(f);
+            }
+        });
+
+        const currentCount = files.length;
+        let filesToAdd = validSizeFiles;
+
+        if (currentCount + validSizeFiles.length > MAX_FILE_COUNT) {
+            const allowedToAdd = Math.max(0, MAX_FILE_COUNT - currentCount);
+            filesToAdd = validSizeFiles.slice(0, allowedToAdd);
+            errors.push(`Maximum file count limit (${MAX_FILE_COUNT}) reached. Only ${allowedToAdd} file(s) added.`);
+        }
+
+        if (errors.length > 0) {
+            alert(errors.join('\n'));
+        }
+
+        if (filesToAdd.length > 0) {
+            trackEvent('file_uploaded', { mode, file_count: filesToAdd.length });
         }
         
-        const newFiles = filteredFiles.map(file => ({
+        const newFiles = filesToAdd.map(file => ({
             id: crypto.randomUUID(),
             file,
             name: file.name,
@@ -879,7 +905,7 @@ export default function App() {
                                             </div>
                                             <div className="mb-4">
                                                 <label htmlFor={`variant-name-${variant.id}`} className="text-[10px] text-on-surface-variant uppercase block mb-1">Variant Name</label>
-                                                <input id={`variant-name-${variant.id}`} aria-label={`Name for Variant ${vIdx + 1}`} type="text" value={variant.name} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, name: e.target.value} : v))} className="w-full bg-surface-container-lowest border border-outline-variant rounded p-1.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
+                                                <input id={`variant-name-${variant.id}`} aria-label={`Name for Variant ${vIdx + 1}`} type="text" value={variant.name} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, name: e.target.value} : v))} maxLength={50} className="w-full bg-surface-container-lowest border border-outline-variant rounded p-1.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
                                             </div>
                                             
                                             <div className="space-y-3">
@@ -961,7 +987,7 @@ export default function App() {
                                         
                                         <div className="pt-3 border-t border-outline-variant/50">
                                             <label htmlFor="output-suffix" className="text-[10px] text-on-surface-variant block mb-1 uppercase tracking-wider">Output Suffix</label>
-                                            <input id="output-suffix" type="text" value={outputSuffix} onChange={(e) => setOutputSuffix(e.target.value)} className="w-full bg-surface-container-lowest border border-outline-variant rounded p-1.5 text-xs text-on-surface focus:outline-none focus:border-outline focus-visible:ring-1 focus-visible:ring-primary"/>
+                                            <input id="output-suffix" type="text" value={outputSuffix} onChange={(e) => setOutputSuffix(e.target.value)} maxLength={50} className="w-full bg-surface-container-lowest border border-outline-variant rounded p-1.5 text-xs text-on-surface focus:outline-none focus:border-outline focus-visible:ring-1 focus-visible:ring-primary"/>
                                         </div>
                                         
                                         <div className="pt-3 border-t border-outline-variant/50">
