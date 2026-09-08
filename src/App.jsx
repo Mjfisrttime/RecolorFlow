@@ -32,9 +32,9 @@ import PreviewCanvas from './components/PreviewCanvas.jsx';
 const isValidHex = (hex) => /^#[0-9a-f]{6}$/i.test(hex);
 
 // Sanitizes filenames to prevent path traversal (Zip Slip) and invalid characters
-// eslint-disable-next-line no-control-regex
 const sanitizeFileName = (name) => {
     if (typeof name !== 'string') return '';
+        // eslint-disable-next-line no-control-regex
         return name.replace(/[\x00-\x1F/\\:]/g, '_').replace(/\.\.+/g, '_');
 };
 
@@ -174,18 +174,44 @@ export default function App() {
 
     // --- FILE HANDLING ---
     const handleFileUpload = (e) => {
+        const MAX_FILES = 50;
+        const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+        let errorMessages = [];
+
         const uploadedFiles = Array.from(e.target.files || (e.dataTransfer && e.dataTransfer.files) || []);
+
+        // Filter by type
         const validTypes = mode === 'gif' 
             ? ['image/gif'] 
             : ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/bmp', 'image/gif'];
         
         const filteredFiles = uploadedFiles.filter(f => validTypes.includes(f.type) || validTypes.some(t => f.name.toLowerCase().endsWith('.' + t.split('/')[1])));
         
-        if (filteredFiles.length > 0) {
-            trackEvent('file_uploaded', { mode, file_count: filteredFiles.length });
+        // Filter by size
+        const sizeFilteredFiles = filteredFiles.filter(f => {
+            if (f.size > MAX_FILE_SIZE) {
+                errorMessages.push(`File "${f.name}" exceeds the maximum size of 20MB.`);
+                return false;
+            }
+            return true;
+        });
+
+        // Filter by count
+        if (files.length + sizeFilteredFiles.length > MAX_FILES) {
+            const allowedCount = Math.max(0, MAX_FILES - files.length);
+            errorMessages.push(`Cannot upload more than ${MAX_FILES} files. Only ${allowedCount} file(s) were added.`);
+            sizeFilteredFiles.splice(allowedCount);
+        }
+
+        if (errorMessages.length > 0) {
+            alert(errorMessages.join('\n'));
+        }
+
+        if (sizeFilteredFiles.length > 0) {
+            trackEvent('file_uploaded', { mode, file_count: sizeFilteredFiles.length });
         }
         
-        const newFiles = filteredFiles.map(file => ({
+        const newFiles = sizeFilteredFiles.map(file => ({
             id: crypto.randomUUID(),
             file,
             name: file.name,
@@ -879,7 +905,7 @@ export default function App() {
                                             </div>
                                             <div className="mb-4">
                                                 <label htmlFor={`variant-name-${variant.id}`} className="text-[10px] text-on-surface-variant uppercase block mb-1">Variant Name</label>
-                                                <input id={`variant-name-${variant.id}`} aria-label={`Name for Variant ${vIdx + 1}`} type="text" value={variant.name} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, name: e.target.value} : v))} className="w-full bg-surface-container-lowest border border-outline-variant rounded p-1.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
+                                                <input id={`variant-name-${variant.id}`} aria-label={`Name for Variant ${vIdx + 1}`} type="text" value={variant.name} onChange={e => setVariants(variants.map(v => v.id === variant.id ? {...v, name: e.target.value} : v))} maxLength={50} className="w-full bg-surface-container-lowest border border-outline-variant rounded p-1.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
                                             </div>
                                             
                                             <div className="space-y-3">
@@ -961,7 +987,7 @@ export default function App() {
                                         
                                         <div className="pt-3 border-t border-outline-variant/50">
                                             <label htmlFor="output-suffix" className="text-[10px] text-on-surface-variant block mb-1 uppercase tracking-wider">Output Suffix</label>
-                                            <input id="output-suffix" type="text" value={outputSuffix} onChange={(e) => setOutputSuffix(e.target.value)} className="w-full bg-surface-container-lowest border border-outline-variant rounded p-1.5 text-xs text-on-surface focus:outline-none focus:border-outline focus-visible:ring-1 focus-visible:ring-primary"/>
+                                            <input id="output-suffix" type="text" value={outputSuffix} onChange={(e) => setOutputSuffix(e.target.value)} maxLength={50} className="w-full bg-surface-container-lowest border border-outline-variant rounded p-1.5 text-xs text-on-surface focus:outline-none focus:border-outline focus-visible:ring-1 focus-visible:ring-primary"/>
                                         </div>
                                         
                                         <div className="pt-3 border-t border-outline-variant/50">
